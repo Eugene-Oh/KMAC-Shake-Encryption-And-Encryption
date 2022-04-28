@@ -4,16 +4,21 @@ import java.util.Arrays;
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
 public class TCSS487Project {
     public static void main(String[] args) throws Exception { 
-        // Testing left_encode and right_encode.
-        // byte[] leftTest = left_encode(new BigInteger("0"));
-        // System.out.println("left_encode test using 0: " + Arrays.toString(leftTest));
-        // byte[] rightTest = right_encode(new BigInteger("0"));
-        // System.out.println("right_encode test using 0: " + Arrays.toString(rightTest));
-        // byte[] bytepadTest = bytepad(rightTest, new BigInteger("10"));
-        // System.out.println("Using right_encode value for bytepad: " + Arrays.toString(bytepadTest));
-        // System.out.println(Arrays.toString("hello".getBytes()));
-        // byte[] encodeStringTest = encode_string("hello".getBytes());
-        // System.out.println("encode string test using: " + Arrays.toString(encodeStringTest));
+        // Testing the different required functions.
+        int encodeTest = 0;
+        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
+        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+
+        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
+        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
+
+        int bytepadInt = 11;
+        byte[] bytepadTest = bytepad(rightTest, new BigInteger("" + bytepadInt));
+        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
+
+        String encodeStringTest = "asd";
+        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
+        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
     }
 
     /**
@@ -114,18 +119,24 @@ public class TCSS487Project {
         }
 
     /**
-     * 
-     * @param bitString
-     * @return
+     * Computes two byte arrays from the given bit strings.
+     * @param bitString The given bit string.
+     * @return A byte array combined from the two computed byte arrays.
      */
     private static byte[] encode_string(byte[] bitString) {
         BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
         byte[] leftEncodeResult = left_encode(bitStringLength);
+
+        // An empty bit string is passed.
         if (bitString.length == 0) {
             return leftEncodeResult;
-        } 
+        }
+        
+        // Computing the byte array from the length of the given bit string.
         int resultLength = bitString.length + leftEncodeResult.length;
         byte[] result = new byte[resultLength];
+
+        // Combine the result with the given bit string.
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
         return result;
