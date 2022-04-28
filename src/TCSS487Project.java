@@ -5,12 +5,15 @@ import java.util.Arrays;
 public class TCSS487Project {
     public static void main(String[] args) throws Exception { 
         // Testing left_encode and right_encode.
-        byte[] leftTest = left_encode(new BigInteger("0"));
-        System.out.println("left_encode test using 0: " + Arrays.toString(leftTest));
-        byte[] rightTest = right_encode(new BigInteger("0"));
-        System.out.println("right_encode test using 0: " + Arrays.toString(rightTest));
-        byte[] bytepadTest = bytepad(rightTest, new BigInteger("10"));
-        System.out.println("Using right_encode value for bytepad: " + Arrays.toString(bytepadTest));
+        // byte[] leftTest = left_encode(new BigInteger("0"));
+        // System.out.println("left_encode test using 0: " + Arrays.toString(leftTest));
+        // byte[] rightTest = right_encode(new BigInteger("0"));
+        // System.out.println("right_encode test using 0: " + Arrays.toString(rightTest));
+        // byte[] bytepadTest = bytepad(rightTest, new BigInteger("10"));
+        // System.out.println("Using right_encode value for bytepad: " + Arrays.toString(bytepadTest));
+        // System.out.println(Arrays.toString("hello".getBytes()));
+        // byte[] encodeStringTest = encode_string("hello".getBytes());
+        // System.out.println("encode string test using: " + Arrays.toString(encodeStringTest));
     }
 
     /**
@@ -83,6 +86,8 @@ public class TCSS487Project {
         return result;
     }
 
+
+
     /**
     * This code is from Professor Barreto's Week 2 Slides.
     * Apply the NIST bytepad primitive to a byte array X with encoding factor w.
@@ -108,6 +113,21 @@ public class TCSS487Project {
         return z;
         }
 
-
-
+    /**
+     * 
+     * @param bitString
+     * @return
+     */
+    private static byte[] encode_string(byte[] bitString) {
+        BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
+        byte[] leftEncodeResult = left_encode(bitStringLength);
+        if (bitString.length == 0) {
+            return leftEncodeResult;
+        } 
+        int resultLength = bitString.length + leftEncodeResult.length;
+        byte[] result = new byte[resultLength];
+        System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
+        System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
+        return result;
+    }
 }
