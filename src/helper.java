@@ -26,6 +26,18 @@ public class helper {
         return x_list;
     }
 
+    private static byte[] encode_string(String s) throws Exception {
+        //Validity Conditions: 0 ≤ len(S) < 2^2040
+        int n = 1;
+        int x = s.length();
+        while (1<<(8*n) <= x){
+            n++;
+        }
+        if (n > 256)
+            throw new Exception("Encode_string length of the string greater than 256" + n);
+        return left_encode(x);
+    }
+
 
     private static void printByte(byte[] source){
         for (int i = 0; i < source.length; i++){
