@@ -2,7 +2,172 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
+
+
+// I HAVE NO CLUE IF ANY OF THIS WORKS HAVE NOT TESTED.
 public class TCSS487Project {
+
+    private static final int KECCAKF_ROUNDS = 24;
+
+    private static final long[] keccakf_rndc = {		
+        0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
+		0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
+		0x8000000080008081L, 0x8000000000008009L, 0x000000000000008aL,
+		0x0000000000000088L, 0x0000000080008009L, 0x000000008000000aL,
+		0x000000008000808bL, 0x800000000000008bL, 0x8000000000008089L,
+		0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L,
+		0x000000000000800aL, 0x800000008000000aL, 0x8000000080008081L,
+		0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L
+    };
+
+    private static final int[] keccakf_rotc = {
+        1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14,
+        27, 41, 56, 8,  25, 43, 62, 18, 39, 61, 20, 44
+    };
+
+    private static final int[] keccakf_piln = {
+        10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4,
+        15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
+    };
+
+    private static int mdlen, rsiz, pt;
+
+    private static byte[] b = new byte[250];
+
+    /**
+     * The very easy to understand keccak core algorithm.
+     */
+    public static void sha3_keccakf(byte[] v) {
+        long t;
+        long[] bc = new long[5];
+        long[] state = new long[25];
+
+        // Endian conversion.
+        int counter = 0;
+        for (int i = 0; i < state.length; i++) {
+            state[i] =  (((long) v[counter + 0] & 0xFFL)) | (((long) v[counter + 1] & 0xFFL) << 8) |
+                        (((long) v[counter + 2] & 0xFFL) << 16) | (((long) v[counter + 3] & 0xFFL) << 24) |
+                        (((long) v[counter + 4] & 0xFFL) << 32) | (((long) v[counter + 5] & 0xFFL) << 40) |
+                        (((long) v[counter + 6] & 0xFFL) << 48) | (((long) v[counter + 7] & 0xFFL) << 56);
+            counter += 8;
+        }
+
+        // The iteration part of Keccak.
+        for (int r = 0; r < KECCAKF_ROUNDS; r++) {
+
+            // Theta
+            for (int i = 0; i < 5; i++) {
+                bc[i] = state[i] ^ state[i + 5] ^ state[i + 10] ^ state[i + 15] ^ state[i + 20];
+            }
+            
+            for (int i = 0; i < 5; i++) {
+                t = bc[(i + 4) % 5] ^ Long.rotateLeft(bc[(i + 1)] % 5, 1);
+                for (int j = 0; j < 25; j += 5) {
+                    state[j + 1] ^= t;
+                }
+            }
+
+            // Rho Pi
+            t = state[1];
+            for (int i = 0; i < 24; i++) {
+                int j = keccakf_piln[i];
+                bc[0] = state[j];
+                state[j] = Long.rotateLeft(t, keccakf_rotc[i]);
+                t = bc[0];
+            }
+
+            // Chi
+            for (int j = 0; j < 25; j += 5) {
+                for (int i = 0; i < 5; i++) {
+                    bc[i] = state[j + i];
+                }
+                for (int i = 0; i < 5; i++) {
+                    state[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
+                }
+            }
+
+            // Iota
+            state[0] ^= keccakf_rndc[r];
+        }
+
+        // Endian conversion again.
+        int counter2 = 0;
+        for (int i = 0; i < state.length; i++) {
+            t = state[i];
+            v[counter2 + 0] = (byte)((t) & 0xFF);
+            v[counter2 + 1] = (byte)((t >> 8) & 0xFF);
+            v[counter2 + 2] = (byte)((t >> 16) & 0xFF);
+            v[counter2 + 3] = (byte)((t >> 24) & 0xFF);
+            v[counter2 + 4] = (byte)((t >> 32) & 0xFF);
+            v[counter2 + 5] = (byte)((t >> 40) & 0xFF);
+            v[counter2 + 6] = (byte)((t >> 48) & 0xFF);
+            v[counter2 + 7] = (byte)((t >> 56) & 0xFF);
+            counter2 += 8;
+        }
+    }
+
+    // Initialization for SHA3.
+    public static void sha3_init(int mdlenarg) {
+        Arrays.fill(b, (byte) 0);
+        mdlen = mdlenarg;
+        rsiz = 200 - (2 * mdlen);
+        pt = 0;
+    }
+
+    // Updating the state with more data.
+    public static void sha3_update(byte[] data, int len) {
+        int j = pt;
+        for (int i = 0; i < len; i++) {
+            b[j++] ^= data[i];
+            if (j >= rsiz) {
+                sha3_keccakf(b);
+                j = 0;
+            }
+        }
+        pt = j;
+    }
+
+    // Finalize and output a hash.
+    public static byte[] sha3_final() {
+        b[pt] ^= 0x06;
+        b[rsiz - 1] ^= 0x80;
+        sha3_keccakf(b);
+
+        byte[] md = new byte[mdlen];
+        for (int i = 0; i < mdlen; i++) {
+            md[i] = b[i];
+        }
+        return md;
+    }
+
+    // The SHA-3 Hash which returns a hash from a given byte array.
+    public static byte[] sha3(byte[] in, int inlen, int mdlen) {
+        sha3_init(mdlen);
+        sha3_update(in, inlen);
+        return sha3_final();
+    }
+    
+    // SHAKE128 and SHAKE256 extensible-output functionality.
+    public static void shake_xof() {
+        b[pt] ^= 0x1F;
+        b[rsiz - 1] ^= 0x80;
+        sha3_keccakf(b);
+        pt = 0;
+    }
+
+    // SHAKE128 and SHAKE256 extensible-output functionality.
+    public static void shake_out(byte[] out, int len) {
+        int j = pt;
+        for (int i = 0; i < len; i++) {
+            if (j >= rsiz) {
+                sha3_keccakf(b);
+                j = 0;
+            }
+            out[i] = b[j++];
+        }
+        pt = j;
+    }
+
     public static void main(String[] args) throws Exception { 
         // Testing the different required functions.
         int encodeTest = 0;
