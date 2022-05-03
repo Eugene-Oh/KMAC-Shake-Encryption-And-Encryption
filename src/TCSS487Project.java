@@ -53,6 +53,8 @@ public class TCSS487Project {
 
         sha3_keccakf(state);
         System.out.println(Arrays.toString(state));
+
+        System.out.println(Arrays.toString(KMACXOF256("".getBytes(), "Secret".getBytes(), 512, "D".getBytes())));
     }
 
     /**
@@ -308,5 +310,39 @@ public class TCSS487Project {
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
         return result;
+    }
+    /**
+     * Concatenates a and b to a new byte array
+     * @param a the first array
+     * @param b the second array
+     * @return A byte array combined from two given a and b array
+     */
+    public static byte[] concat(final byte[] a, final byte[] b){
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0,  a.length);
+        System.arraycopy(b, 0, result, a.length,  b.length);
+        return result;
+    }
+
+    public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
+        TCSS487Project TCSS487Project = new TCSS487Project();
+        byte[] result = new byte[L>>>3];
+        TCSS487Project.sha3_init(L>>>3);
+        if ((N != null && N.length != 0) || (S != null && S.length != 0)){
+            byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
+            TCSS487Project.sha3_update(combination, combination.length);
+        }
+        TCSS487Project.sha3_update(X, X.length);
+        TCSS487Project.shake_xof();
+        TCSS487Project.shake_out(result, result.length);
+        return result;
+    }
+
+    public static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
+        byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
+        byte[] rightEncodeL = right_encode(BigInteger.valueOf(L));
+        newX = concat(newX, X);
+        newX = concat(newX, rightEncodeL);
+        return cShake256(newX, L, "KMAC".getBytes(), S);
     }
 }
