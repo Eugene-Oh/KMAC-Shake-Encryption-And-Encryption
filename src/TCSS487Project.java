@@ -2,11 +2,12 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
-
+// All functions were based off of mjorsaarinen's tiny_sha3 implementation on GitHub
+// and the SHA-3 NIST documentation.
 
 // I HAVE NO CLUE IF ANY OF THIS WORKS HAVE NOT TESTED.
 public class TCSS487Project {
-    public TCSS487Project(){};
+
     private static final int KECCAKF_ROUNDS = 24;
 
     private static final long[] keccakf_rndc = {		
@@ -32,23 +33,42 @@ public class TCSS487Project {
 
     private static int mdlen, rsiz, pt;
 
-    private static byte[] b = new byte[250];
+    private static byte[] state = new byte[200];
+    public static void main(String[] args) throws Exception { 
+        // Testing the different required functions.
+        int encodeTest = 0;
+        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
+        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+
+        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
+        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
+
+        String encodeStringTest = "Email Signature";
+        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
+        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
+
+        int bytepadInt = 5;
+        byte[] bytepadTest = bytepad(encodeStringTestBytes, new BigInteger("" + bytepadInt));
+        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
+
+        sha3_keccakf(state);
+        System.out.println(Arrays.toString(state));
+    }
 
     /**
      * The very easy to understand keccak core algorithm.
      */
-    public static void sha3_keccakf(byte[] v) {
-        long t;
+    public static void sha3_keccakf(byte[] stateArg) {
+        long[] q = new long[25];
         long[] bc = new long[6];
-        long[] state = new long[25];
 
         // Endian conversion.
         int counter = 0;
-        for (int i = 0; i < state.length; i++) {
-            state[i] =  (((long) v[counter + 0] & 0xFFL)) | (((long) v[counter + 1] & 0xFFL) << 8) |
-                        (((long) v[counter + 2] & 0xFFL) << 16) | (((long) v[counter + 3] & 0xFFL) << 24) |
-                        (((long) v[counter + 4] & 0xFFL) << 32) | (((long) v[counter + 5] & 0xFFL) << 40) |
-                        (((long) v[counter + 6] & 0xFFL) << 48) | (((long) v[counter + 7] & 0xFFL) << 56);
+        for (int i = 0; i < q.length; i++) {
+            q[i] =  (((long) stateArg[counter + 0] & 0xFFL)) | (((long) stateArg[counter + 1] & 0xFFL) << 8) |
+                        (((long) stateArg[counter + 2] & 0xFFL) << 16) | (((long) stateArg[counter + 3] & 0xFFL) << 24) |
+                        (((long) stateArg[counter + 4] & 0xFFL) << 32) | (((long) stateArg[counter + 5] & 0xFFL) << 40) |
+                        (((long) stateArg[counter + 6] & 0xFFL) << 48) | (((long) stateArg[counter + 7] & 0xFFL) << 56);
             counter += 8;
         }
 
@@ -57,58 +77,59 @@ public class TCSS487Project {
 
             // Theta
             for (int i = 0; i < 5; i++) {
-                bc[i] = state[i] ^ state[i + 5] ^ state[i + 10] ^ state[i + 15] ^ state[i + 20];
+                bc[i] = q[i] ^ q[i + 5] ^ q[i + 10] ^ q[i + 15] ^ q[i + 20];
             }
             
             for (int i = 0; i < 5; i++) {
-                t = bc[(i + 4) % 5] ^ Long.rotateLeft(bc[(i + 1)] % 5, 1);
+                long t = bc[(i + 4) % 5] ^ Long.rotateLeft(bc[(i + 1)] % 5, 1);
                 for (int j = 0; j < 25; j += 5) {
-                    state[j + 1] ^= t;
+                    q[j + 1] ^= t;
                 }
             }
 
             // Rho Pi
-            t = state[1];
+            long t = q[1];
             for (int i = 0; i < 24; i++) {
                 int j = keccakf_piln[i];
-                bc[0] = state[j];
-                state[j] = Long.rotateLeft(t, keccakf_rotc[i]);
+                bc[0] = q[j];
+                q[j] = Long.rotateLeft(t, keccakf_rotc[i]);
                 t = bc[0];
             }
 
             // Chi
             for (int j = 0; j < 25; j += 5) {
                 for (int i = 0; i < 5; i++) {
-                    bc[i] = state[j + i];
+                    bc[i] = q[j + i];
                 }
                 for (int i = 0; i < 5; i++) {
-                    state[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
+                    q[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
                 }
             }
 
             // Iota
-            state[0] ^= keccakf_rndc[r];
+            q[0] ^= keccakf_rndc[r];
         }
 
         // Endian conversion again.
         int counter2 = 0;
-        for (int i = 0; i < state.length; i++) {
-            t = state[i];
-            v[counter2 + 0] = (byte)((t) & 0xFF);
-            v[counter2 + 1] = (byte)((t >> 8) & 0xFF);
-            v[counter2 + 2] = (byte)((t >> 16) & 0xFF);
-            v[counter2 + 3] = (byte)((t >> 24) & 0xFF);
-            v[counter2 + 4] = (byte)((t >> 32) & 0xFF);
-            v[counter2 + 5] = (byte)((t >> 40) & 0xFF);
-            v[counter2 + 6] = (byte)((t >> 48) & 0xFF);
-            v[counter2 + 7] = (byte)((t >> 56) & 0xFF);
+        for (int i = 0; i < q.length; i++) {
+            long t = q[i];
+            stateArg[counter2 + 0] = (byte)((t) & 0xFF);
+            stateArg[counter2 + 1] = (byte)((t >> 8) & 0xFF);
+            stateArg[counter2 + 2] = (byte)((t >> 16) & 0xFF);
+            stateArg[counter2 + 3] = (byte)((t >> 24) & 0xFF);
+            stateArg[counter2 + 4] = (byte)((t >> 32) & 0xFF);
+            stateArg[counter2 + 5] = (byte)((t >> 40) & 0xFF);
+            stateArg[counter2 + 6] = (byte)((t >> 48) & 0xFF);
+            stateArg[counter2 + 7] = (byte)((t >> 56) & 0xFF);
             counter2 += 8;
         }
+        state = stateArg;
     }
 
     // Initialization for SHA3.
     public static void sha3_init(int mdlenarg) {
-        Arrays.fill(b, (byte) 0);
+        Arrays.fill(state, (byte) 0);
         mdlen = mdlenarg;
         rsiz = 200 - (2 * mdlen);
         pt = 0;
@@ -118,9 +139,9 @@ public class TCSS487Project {
     public static void sha3_update(byte[] data, int len) {
         int j = pt;
         for (int i = 0; i < len; i++) {
-            b[j++] ^= data[i];
+            state[j++] ^= data[i];
             if (j >= rsiz) {
-                sha3_keccakf(b);
+                sha3_keccakf(state);
                 j = 0;
             }
         }
@@ -129,13 +150,13 @@ public class TCSS487Project {
 
     // Finalize and output a hash.
     public static byte[] sha3_final() {
-        b[pt] ^= 0x06;
-        b[rsiz - 1] ^= 0x80;
-        sha3_keccakf(b);
+        state[pt] ^= 0x06;
+        state[rsiz - 1] ^= 0x80;
+        sha3_keccakf(state);
 
         byte[] md = new byte[mdlen];
         for (int i = 0; i < mdlen; i++) {
-            md[i] = b[i];
+            md[i] = state[i];
         }
         return md;
     }
@@ -149,9 +170,9 @@ public class TCSS487Project {
     
     // SHAKE128 and SHAKE256 extensible-output functionality.
     public static void shake_xof() {
-        b[pt] ^= 0x1F;
-        b[rsiz - 1] ^= 0x80;
-        sha3_keccakf(b);
+        state[pt] ^= 0x1F;
+        state[rsiz - 1] ^= 0x80;
+        sha3_keccakf(state);
         pt = 0;
     }
 
@@ -160,32 +181,12 @@ public class TCSS487Project {
         int j = pt;
         for (int i = 0; i < len; i++) {
             if (j >= rsiz) {
-                sha3_keccakf(b);
+                sha3_keccakf(state);
                 j = 0;
             }
-            out[i] = b[j++];
+            out[i] = state[j++];
         }
         pt = j;
-    }
-
-    public static void main(String[] args) throws Exception { 
-        // Testing the different required functions.
-//        int encodeTest = 0;
-//        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
-//        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
-//
-//        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
-//        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
-//
-//        int bytepadInt = 11;
-//        byte[] bytepadTest = bytepad(rightTest, new BigInteger("" + bytepadInt));
-//        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
-//
-//        String encodeStringTest = "asd";
-//        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
-//        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
-
-        System.out.println(Arrays.toString(KMACXOF256("".getBytes(),"Secret".getBytes(), 512,"D".getBytes())));
     }
 
     /**
@@ -267,7 +268,7 @@ public class TCSS487Project {
     * @param w the encoding factor (the output length must be a multiple of w)
     * @return the byte-padded byte array X with encoding factor w.
     */
-    public static byte[] bytepad(byte[] X, BigInteger w) {
+    private static byte[] bytepad(byte[] X, BigInteger w) {
         // Validity Conditions: w > 0
         assert w.intValue() > 0;
         // 1. z = left_encode(w) || X.
@@ -290,7 +291,7 @@ public class TCSS487Project {
      * @param bitString The given bit string.
      * @return A byte array combined from the two computed byte arrays.
      */
-    public static byte[] encode_string(byte[] bitString) {
+    private static byte[] encode_string(byte[] bitString) {
         BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
         byte[] leftEncodeResult = left_encode(bitStringLength);
 
@@ -307,43 +308,5 @@ public class TCSS487Project {
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
         return result;
-    }
-
-    /**
-     * Concatenates a and b to a new byte array
-     * @param a the first array
-     * @param b the second array
-     * @return A byte array combined from two given a and b array
-     */
-    public static byte[] concat(final byte[] a, final byte[] b){
-        byte[] result = new byte[a.length + b.length];
-        System.arraycopy(a, 0, result, 0,  a.length);
-        System.arraycopy(b, 0, result, a.length,  b.length);
-        return result;
-    }
-
-    public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
-        TCSS487Project TCSS487Project = new TCSS487Project();
-        byte[] result = new byte[L];
-        TCSS487Project.sha3_init(L);
-        if ((N != null && N.length != 0) || (S != null && S.length != 0)){
-            byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
-            TCSS487Project.sha3_update(combination, combination.length);
-        }
-        TCSS487Project.sha3_update(X, X.length);
-        TCSS487Project.shake_xof();
-        TCSS487Project.shake_out(result, result.length);
-        return result;
-    }
-
-    public static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
-//        Shake shake = new Shake();
-//        byte[] result = new byte[L];
-//        shake.sha3_init(L);
-        byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
-        byte[] rightEncodeL = right_encode(BigInteger.valueOf(L));
-        newX = concat(newX, X);
-        newX = concat(newX, rightEncodeL);
-        return cShake256(newX, L, "KMAC".getBytes(), S);
     }
 }
