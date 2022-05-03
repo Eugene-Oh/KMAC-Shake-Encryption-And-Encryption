@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 // I HAVE NO CLUE IF ANY OF THIS WORKS HAVE NOT TESTED.
 public class TCSS487Project {
-
+    public TCSS487Project(){};
     private static final int KECCAKF_ROUNDS = 24;
 
     private static final long[] keccakf_rndc = {		
@@ -39,7 +39,7 @@ public class TCSS487Project {
      */
     public static void sha3_keccakf(byte[] v) {
         long t;
-        long[] bc = new long[5];
+        long[] bc = new long[6];
         long[] state = new long[25];
 
         // Endian conversion.
@@ -170,20 +170,22 @@ public class TCSS487Project {
 
     public static void main(String[] args) throws Exception { 
         // Testing the different required functions.
-        int encodeTest = 0;
-        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
-        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+//        int encodeTest = 0;
+//        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
+//        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+//
+//        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
+//        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
+//
+//        int bytepadInt = 11;
+//        byte[] bytepadTest = bytepad(rightTest, new BigInteger("" + bytepadInt));
+//        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
+//
+//        String encodeStringTest = "asd";
+//        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
+//        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
 
-        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
-        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
-
-        int bytepadInt = 11;
-        byte[] bytepadTest = bytepad(rightTest, new BigInteger("" + bytepadInt));
-        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
-
-        String encodeStringTest = "asd";
-        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
-        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
+        System.out.println(Arrays.toString(KMACXOF256("".getBytes(),"Secret".getBytes(), 512,"D".getBytes())));
     }
 
     /**
@@ -265,7 +267,7 @@ public class TCSS487Project {
     * @param w the encoding factor (the output length must be a multiple of w)
     * @return the byte-padded byte array X with encoding factor w.
     */
-    private static byte[] bytepad(byte[] X, BigInteger w) {
+    public static byte[] bytepad(byte[] X, BigInteger w) {
         // Validity Conditions: w > 0
         assert w.intValue() > 0;
         // 1. z = left_encode(w) || X.
@@ -288,7 +290,7 @@ public class TCSS487Project {
      * @param bitString The given bit string.
      * @return A byte array combined from the two computed byte arrays.
      */
-    private static byte[] encode_string(byte[] bitString) {
+    public static byte[] encode_string(byte[] bitString) {
         BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
         byte[] leftEncodeResult = left_encode(bitStringLength);
 
@@ -305,5 +307,43 @@ public class TCSS487Project {
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
         return result;
+    }
+
+    /**
+     * Concatenates a and b to a new byte array
+     * @param a the first array
+     * @param b the second array
+     * @return A byte array combined from two given a and b array
+     */
+    public static byte[] concat(final byte[] a, final byte[] b){
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0,  a.length);
+        System.arraycopy(b, 0, result, a.length,  b.length);
+        return result;
+    }
+
+    public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
+        TCSS487Project TCSS487Project = new TCSS487Project();
+        byte[] result = new byte[L];
+        TCSS487Project.sha3_init(L);
+        if ((N != null && N.length != 0) || (S != null && S.length != 0)){
+            byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
+            TCSS487Project.sha3_update(combination, combination.length);
+        }
+        TCSS487Project.sha3_update(X, X.length);
+        TCSS487Project.shake_xof();
+        TCSS487Project.shake_out(result, result.length);
+        return result;
+    }
+
+    public static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
+//        Shake shake = new Shake();
+//        byte[] result = new byte[L];
+//        shake.sha3_init(L);
+        byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
+        byte[] rightEncodeL = right_encode(BigInteger.valueOf(L));
+        newX = concat(newX, X);
+        newX = concat(newX, rightEncodeL);
+        return cShake256(newX, L, "KMAC".getBytes(), S);
     }
 }
