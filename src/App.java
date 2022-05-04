@@ -62,12 +62,11 @@ public class App {
         }
         // Test encryption
         byte[] decrypt_byte = enc.decrypt(sym, passphrase);
-        System.out.println(Arrays.toString(sym.getZ()));
 
-        System.out.println();
-        System.out.println(Arrays.equals(M,decrypt_byte));
-        System.out.println(Arrays.toString(M));
-        System.out.println(Arrays.toString(decrypt_byte));
+//        System.out.println();
+//        System.out.println(Arrays.equals(M,decrypt_byte));
+//        System.out.println(Arrays.toString(M));
+//        System.out.println(Arrays.toString(decrypt_byte));
 //        String decrypt_string = new String(decrypt_byte);
 //        System.out.println(original.equals(decrypt_string));
 

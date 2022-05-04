@@ -19,6 +19,11 @@ public class Encryption {
         //need to do t he exclusive-or with m here
         byte[] c = TCSS487Project.KMACXOF256(ke, EMPTYSTRING, m.length, "SKE".getBytes());
         byte[] t = TCSS487Project.KMACXOF256(ka, m, 512, "SKA".getBytes());
+//        System.out.println(Arrays.toString(m));
+        System.out.println(m.length);
+        System.out.println(c.length);
+
+
         return new SymmetricCryptogram(z,c,t);
     }
 
@@ -32,6 +37,9 @@ public class Encryption {
         byte[] ka = Arrays.copyOfRange(keka, keka.length/2, keka.length);
         byte[] m = TCSS487Project.KMACXOF256(ke, EMPTYSTRING,c.length,"SKE".getBytes());
         byte[] t_2 = TCSS487Project.KMACXOF256(ka, m, 512, "SKA".getBytes());
+        System.out.println("--------");
+//        System.out.println(Arrays.toString(m));
+
         if (Arrays.equals(t,t_2)){
             return m;
         }else
