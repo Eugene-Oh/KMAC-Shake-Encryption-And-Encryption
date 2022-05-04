@@ -1,4 +1,5 @@
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
@@ -36,26 +37,29 @@ public class TCSS487Project {
     private static byte[] state = new byte[200];
     public static void main(String[] args) throws Exception { 
         // Testing the different required functions.
-        int encodeTest = 0;
-        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
-        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+//        int encodeTest = 0;
+//        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
+//        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
+//
+//        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
+//        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
+//
+//        String encodeStringTest = "Email Signature";
+//        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
+//        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
+//
+//        int bytepadInt = 5;
+//        byte[] bytepadTest = bytepad(encodeStringTestBytes, new BigInteger("" + bytepadInt));
+//        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
+//
+//        sha3_keccakf(state);
+//        System.out.println(Arrays.toString(state));
 
-        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
-        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
-
-        String encodeStringTest = "Email Signature";
-        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
-        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
-
-        int bytepadInt = 5;
-        byte[] bytepadTest = bytepad(encodeStringTestBytes, new BigInteger("" + bytepadInt));
-        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
-
-        sha3_keccakf(state);
-        System.out.println(Arrays.toString(state));
-
-        System.out.println(Arrays.toString(KMACXOF256("".getBytes(), "Secret".getBytes(), 512, "D".getBytes())));
+//        System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 512, "D".getBytes())));
+//        System.out.println(Arrays.toString(cShake256()));
+//        System.out.println(bytesToHex(encode_string("Email Signature".getBytes())));
     }
+
 
     /**
      * The very easy to understand keccak core algorithm.
@@ -344,5 +348,16 @@ public class TCSS487Project {
         newX = concat(newX, X);
         newX = concat(newX, rightEncodeL);
         return cShake256(newX, L, "KMAC".getBytes(), S);
+    }
+
+    private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+    public static String bytesToHex(byte[] bytes) {
+        byte[] hexChars = new byte[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars, StandardCharsets.UTF_8);
     }
 }
