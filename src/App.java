@@ -33,16 +33,16 @@ public class App {
                 choice = sc.nextInt();
                 if (choice == 1){
                     M = getFile();
-                    result = TCSS487Project.KMACXOF256(K, M, 512, S);
-                    System.out.println("Plain cryptographic hash result: " + TCSS487Project.bytesToHex(result));
+                    result = Shake.KMACXOF256(K, M, 512, S);
+                    System.out.println("Plain cryptographic hash result: " + Shake.bytesToHex(result));
 
                     }
                 else if (choice == 2){
                     System.out.print("Your string: ");
                     str = sc.next();
                     M = str.getBytes();
-                    result = TCSS487Project.KMACXOF256(K, M, 512, S);
-                    System.out.println("Plain cryptographic hash result: " + TCSS487Project.bytesToHex(result));
+                    result = Shake.KMACXOF256(K, M, 512, S);
+                    System.out.println("Plain cryptographic hash result: " + Shake.bytesToHex(result));
                 }
                 else if (choice == 3){
                     System.out.println("Please choose a file");

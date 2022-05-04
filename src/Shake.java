@@ -7,7 +7,7 @@ import java.util.Arrays;
 // and the SHA-3 NIST documentation.
 
 // I HAVE NO CLUE IF ANY OF THIS WORKS HAVE NOT TESTED.
-public class TCSS487Project {
+public class Shake {
 
     private static final int KECCAKF_ROUNDS = 24;
     private static int mdlen, rsiz, pt;
@@ -342,7 +342,7 @@ public class TCSS487Project {
     }
 
     public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
-        TCSS487Project shake = new TCSS487Project();
+        Shake shake = new Shake();
         byte[] result = new byte[L];
         shake.sha3_init();
         if ((N != null && N.length != 0) || (S != null && S.length != 0)){
