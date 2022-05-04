@@ -10,6 +10,8 @@ import java.util.Arrays;
 public class TCSS487Project {
 
     private static final int KECCAKF_ROUNDS = 24;
+    private static int mdlen, rsiz, pt;
+    private static byte[] state = new byte[200];
 
     private static final long[] keccakf_rndc = {
             0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
@@ -32,9 +34,7 @@ public class TCSS487Project {
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
     };
 
-    private static int mdlen, rsiz, pt;
 
-    private static byte[] state = new byte[200];
     public static void main(String[] args) throws Exception {
         // Testing the different required functions.
 //        int encodeTest = 0;
@@ -138,7 +138,7 @@ public class TCSS487Project {
     }
 
     // Initialization for SHA3.
-    public static void sha3_init(int mdlenarg) {
+    public static void sha3_init() {
         Arrays.fill(state, (byte) 0);
         mdlen = 32;
         rsiz = 200 - (2 * mdlen);
@@ -173,15 +173,21 @@ public class TCSS487Project {
 
     // The SHA-3 Hash which returns a hash from a given byte array.
     public static byte[] sha3(byte[] in, int inlen, int mdlen) {
-        sha3_init(mdlen);
+        sha3_init();
         sha3_update(in, inlen);
         return sha3_final();
     }
 
     // SHAKE128 and SHAKE256 extensible-output functionality.
     public static void shake_xof() {
-        state[pt] ^= 0x1F;
-        state[rsiz - 1] ^= 0x80;
+
+
+        byte[] right_encode = right_encode(BigInteger.valueOf(0));
+        sha3_update(right_encode, right_encode.length);
+
+
+        state[pt] ^= (byte)0x1F;
+        state[rsiz - 1] ^= (byte)0x80;
         sha3_keccakf(state);
         pt = 0;
     }
@@ -326,23 +332,26 @@ public class TCSS487Project {
      * @return A byte array combined from two given a and b array
      */
     public static byte[] concat(final byte[] a, final byte[] b){
-        byte[] result = new byte[a.length + b.length];
-        System.arraycopy(a, 0, result, 0,  a.length);
-        System.arraycopy(b, 0, result, a.length,  b.length);
-        return result;
+
+        int alen = (a != null) ? a.length : 0;
+        int blen = (b != null) ? b.length : 0;
+        byte[] c = new byte[alen + blen];
+        System.arraycopy(a, 0, c, 0, alen);
+        System.arraycopy(b, 0, c, alen, blen);
+        return c;
     }
 
     public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
-        TCSS487Project TCSS487Project = new TCSS487Project();
-        byte[] result = new byte[L>>>3];
-        TCSS487Project.sha3_init(L>>>3);
+        TCSS487Project shake = new TCSS487Project();
+        byte[] result = new byte[L];
+        shake.sha3_init();
         if ((N != null && N.length != 0) || (S != null && S.length != 0)){
             byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
-            TCSS487Project.sha3_update(combination, combination.length);
+            shake.sha3_update(combination, combination.length);
         }
-        TCSS487Project.sha3_update(X, X.length);
-        TCSS487Project.shake_xof();
-        TCSS487Project.shake_out(result, result.length);
+        shake.sha3_update(X, X.length);
+        shake.shake_xof();
+        shake.shake_out(result, result.length);
         return result;
     }
 
@@ -352,6 +361,7 @@ public class TCSS487Project {
         newX = concat(newX, X);
         newX = concat(newX, rightEncodeL);
         return cShake256(newX, L, "KMAC".getBytes(), S);
+
     }
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);

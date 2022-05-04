@@ -8,15 +8,15 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class App {
-    private static JFileChooser chooser = new JFileChooser();
+    private static JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please choose an option:");
-        System.out.println("1. Open a file");
-        System.out.println("2. Give a string");
-        System.out.println("3. Encrypt a given data file symmetrically under a given passphrase");
-        System.out.println("4. Decrypt a given symmetric cryptogram under a given passphrase");
-        System.out.print("Your choice: ");
+        System.out.print("1. Open a file \n"
+                        + "2. Give a string\n"
+                        + "3. Encrypt a given data file symmetrically under a given passphrase\n"
+                        + "4. Decrypt a given symmetric cryptogram under a given passphrase\n"
+                        + "Your choice: ");
         int choice = 0;
         byte[] S; //diversification string
         byte[] K; //key
@@ -47,7 +47,7 @@ public class App {
                 else if (choice == 3){
                     System.out.println("Please choose a file");
                     M = getFile();
-                    System.out.print("Please enter you passphrase:");
+                    System.out.print("Please enter you passphrase: ");
                     passphrase = sc.next();
                     sym = enc.encrypt(M,passphrase);
                 }
@@ -57,20 +57,20 @@ public class App {
                 break;
             }
             else {
-                System.out.println("Must choose 1 or 2.");
-                sc.next("Your choice: ");
+                System.out.println("\nMust choose 1, 2, 3, or 4.");
+                System.out.print("1. Open a file \n"
+                        + "2. Give a string\n"
+                        + "3. Encrypt a given data file symmetrically under a given passphrase\n"
+                        + "4. Decrypt a given symmetric cryptogram under a given passphrase\n"
+                        + "Your choice: ");
+                sc.next();
             }
         }
         // Test encryption
         byte[] decrypt_byte = enc.decrypt(sym, passphrase);
 
-//        System.out.println();
-//        System.out.println(Arrays.equals(M,decrypt_byte));
-//        System.out.println(Arrays.toString(M));
-//        System.out.println(Arrays.toString(decrypt_byte));
-//        String decrypt_string = new String(decrypt_byte);
-//        System.out.println(original.equals(decrypt_string));
-
+        System.out.println();
+        System.out.println(Arrays.equals(M,decrypt_byte));
     }
 
     /**
@@ -78,8 +78,9 @@ public class App {
      * @return converted byte array from a chosen file
      */
     private static byte[] getFile(){
+//        JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         JDialog dialog = new JDialog();
-        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        chooser.setCurrentDirectory(FileSystemView.getFileSystemView().getHomeDirectory());
         int retValue = chooser.showOpenDialog(dialog);
         File selectedFile = null;
         byte[] result = null;
@@ -94,6 +95,4 @@ public class App {
         }
         return result;
     }
-
-
 }
