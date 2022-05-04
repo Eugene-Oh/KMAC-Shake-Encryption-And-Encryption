@@ -55,7 +55,7 @@ public class TCSS487Project {
 //        sha3_keccakf(state);
 //        System.out.println(Arrays.toString(state));
 
-//        System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 512, "D".getBytes())));
+        System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 1024, "D".getBytes())));
 //        System.out.println(Arrays.toString(cShake256()));
 //        System.out.println(bytesToHex(encode_string("Email Signature".getBytes())));
     }
@@ -136,7 +136,7 @@ public class TCSS487Project {
     // Initialization for SHA3.
     public static void sha3_init(int mdlenarg) {
         Arrays.fill(state, (byte) 0);
-        mdlen = mdlenarg;
+        mdlen = 32;
         rsiz = 200 - (2 * mdlen);
         pt = 0;
     }

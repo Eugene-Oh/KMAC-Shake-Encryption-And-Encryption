@@ -6,9 +6,9 @@ public class SymmetricCryptogram implements Serializable {
     byte[] c;
     byte[] t;
     public SymmetricCryptogram(byte[] z, byte[] c, byte[] t){
-        z = z;
-        c = c;
-        t = t;
+        this.z = z;
+        this.c = c;
+        this.t = t;
     }
     public byte[] getZ() {
         return this.z;
