@@ -7,6 +7,9 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
+/**
+ *
+ */
 public class App {
     private static JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
     public static void main(String[] args) {

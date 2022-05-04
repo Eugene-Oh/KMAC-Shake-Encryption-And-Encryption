@@ -34,32 +34,6 @@ public class Shake {
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
     };
 
-
-    public static void main(String[] args) throws Exception {
-        // Testing the different required functions.
-//        int encodeTest = 0;
-//        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
-//        System.out.println("\nleft_encode test using " + encodeTest + ": " + Arrays.toString(leftTest) + "\n");
-//
-//        byte[] rightTest = right_encode(new BigInteger("" + encodeTest));
-//        System.out.println("right_encode test using " + encodeTest + ": " + Arrays.toString(rightTest) + "\n");
-//
-//        String encodeStringTest = "Email Signature";
-//        byte[] encodeStringTestBytes = encode_string(encodeStringTest.getBytes());
-//        System.out.println("encode_string test using string \"" + encodeStringTest + "\": " + Arrays.toString(encodeStringTestBytes) + "\n");
-//
-//        int bytepadInt = 5;
-//        byte[] bytepadTest = bytepad(encodeStringTestBytes, new BigInteger("" + bytepadInt));
-//        System.out.println("Using right_encode value with " + bytepadInt + " for bytepad: " + Arrays.toString(bytepadTest) + "\n");
-//
-//        sha3_keccakf(state);
-//        System.out.println(Arrays.toString(state));
-
-        // System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 1024, "D".getBytes())));
-//        System.out.println(Arrays.toString(cShake256()));
-//        System.out.println(bytesToHex(encode_string("Email Signature".getBytes())));
-    }
-
     // Simulates bit rotation.
     private static long RotateLeft(long x, int y) {
         return (x << y) | (x >>> (64 - y));
@@ -68,7 +42,7 @@ public class Shake {
     /**
      * The very easy to understand keccak core algorithm.
      */
-    public static void sha3_keccakf(byte[] stateArg) {
+    static void sha3_keccakf(byte[] stateArg) {
         long[] q = new long[25];
         long[] bc = new long[5];
 
@@ -213,7 +187,7 @@ public class Shake {
      * @param x The BigInteger to be used to to encode the byte array.
      * @return The computed byte array.
      */
-    public static byte[] right_encode(BigInteger x){
+    static byte[] right_encode(BigInteger x){
 
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
@@ -248,7 +222,7 @@ public class Shake {
      * @param x The BigInteger to be used to to encode the byte array.
      * @return The computed byte array.
      */
-    public static byte[] left_encode(BigInteger x){
+    static byte[] left_encode(BigInteger x){
 
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
@@ -284,7 +258,7 @@ public class Shake {
      * @param w the encoding factor (the output length must be a multiple of w)
      * @return the byte-padded byte array X with encoding factor w.
      */
-    private static byte[] bytepad(byte[] X, BigInteger w) {
+    static byte[] bytepad(byte[] X, BigInteger w) {
         // Validity Conditions: w > 0
         assert w.intValue() > 0;
         // 1. z = left_encode(w) || X.
@@ -307,7 +281,7 @@ public class Shake {
      * @param bitString The given bit string.
      * @return A byte array combined from the two computed byte arrays.
      */
-    private static byte[] encode_string(byte[] bitString) {
+    static byte[] encode_string(byte[] bitString) {
         BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
         byte[] leftEncodeResult = left_encode(bitStringLength);
 
@@ -341,7 +315,15 @@ public class Shake {
         return c;
     }
 
-    public static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
+    /**
+     *
+     * @param X
+     * @param L
+     * @param N
+     * @param S
+     * @return
+     */
+    static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
         Shake shake = new Shake();
         byte[] result = new byte[L];
         shake.sha3_init();
@@ -355,7 +337,15 @@ public class Shake {
         return result;
     }
 
-    public static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
+    /**
+     *
+     * @param K
+     * @param X
+     * @param L
+     * @param S
+     * @return
+     */
+    static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
         byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
         byte[] rightEncodeL = right_encode(BigInteger.valueOf(L));
         newX = concat(newX, X);
@@ -364,8 +354,15 @@ public class Shake {
 
     }
 
+
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
-    public static String bytesToHex(byte[] bytes) {
+
+    /**
+     *
+     * @param bytes
+     * @return
+     */
+    static String bytesToHex(byte[] bytes) {
         byte[] hexChars = new byte[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
