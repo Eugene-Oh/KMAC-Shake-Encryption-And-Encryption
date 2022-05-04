@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class App {
+    private static JFileChooser chooser = new JFileChooser();
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please choose an option:");
@@ -77,8 +78,9 @@ public class App {
      * @return converted byte array from a chosen file
      */
     private static byte[] getFile(){
-        JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        int retValue = chooser.showOpenDialog(null);
+        JDialog dialog = new JDialog();
+        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        int retValue = chooser.showOpenDialog(dialog);
         File selectedFile = null;
         byte[] result = null;
         if (retValue == JFileChooser.APPROVE_OPTION) {
