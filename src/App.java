@@ -25,24 +25,12 @@ public class App {
             if (sc.hasNextInt()){
                 choice = sc.nextInt();
                 if (choice == 1){
+                    M = getFile();
+                    result = TCSS487Project.KMACXOF256(K, M, 512, S);
+                    System.out.println("Plain cryptographic hash result: " + TCSS487Project.bytesToHex(result));
 
-                    JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-                    int retValue = chooser.showOpenDialog(null);
-                    File selectedFile = null;
-                    if (retValue == JFileChooser.APPROVE_OPTION) {
-                        selectedFile = chooser.getSelectedFile();
-                        Path path = Paths.get(selectedFile.getAbsolutePath());
-                        try {
-                            M = Files.readAllBytes(path);
-
-                            result = TCSS487Project.KMACXOF256(K, M, 512, S);
-                            System.out.println("Plain cryptographic hash result: " + TCSS487Project.bytesToHex(result));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
                     }
-                    }
-                else {
+                else if (choice == 2){
                     System.out.print("Your string: ");
                     str = sc.next();
                     M = str.getBytes();
@@ -56,6 +44,27 @@ public class App {
                 sc.next("Your choice: ");
             }
         }
+    }
+
+    /**
+     * Convert a file to byte array
+     * @return converted byte array from a chosen file
+     */
+    private static byte[] getFile(){
+        JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        int retValue = chooser.showOpenDialog(null);
+        File selectedFile = null;
+        byte[] result = null;
+        if (retValue == JFileChooser.APPROVE_OPTION) {
+            selectedFile = chooser.getSelectedFile();
+            Path path = Paths.get(selectedFile.getAbsolutePath());
+            try {
+                result = Files.readAllBytes(path);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
     }
 
 
