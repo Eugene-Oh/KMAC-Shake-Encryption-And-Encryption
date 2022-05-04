@@ -11,31 +11,31 @@ public class TCSS487Project {
 
     private static final int KECCAKF_ROUNDS = 24;
 
-    private static final long[] keccakf_rndc = {		
-        0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
-		0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
-		0x8000000080008081L, 0x8000000000008009L, 0x000000000000008aL,
-		0x0000000000000088L, 0x0000000080008009L, 0x000000008000000aL,
-		0x000000008000808bL, 0x800000000000008bL, 0x8000000000008089L,
-		0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L,
-		0x000000000000800aL, 0x800000008000000aL, 0x8000000080008081L,
-		0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L
+    private static final long[] keccakf_rndc = {
+            0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
+            0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
+            0x8000000080008081L, 0x8000000000008009L, 0x000000000000008aL,
+            0x0000000000000088L, 0x0000000080008009L, 0x000000008000000aL,
+            0x000000008000808bL, 0x800000000000008bL, 0x8000000000008089L,
+            0x8000000000008003L, 0x8000000000008002L, 0x8000000000000080L,
+            0x000000000000800aL, 0x800000008000000aL, 0x8000000080008081L,
+            0x8000000000008080L, 0x0000000080000001L, 0x8000000080008008L
     };
 
     private static final int[] keccakf_rotc = {
-        1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14,
-        27, 41, 56, 8,  25, 43, 62, 18, 39, 61, 20, 44
+            1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14,
+            27, 41, 56, 8,  25, 43, 62, 18, 39, 61, 20, 44
     };
 
     private static final int[] keccakf_piln = {
-        10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4,
-        15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
+            10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4,
+            15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
     };
 
     private static int mdlen, rsiz, pt;
 
     private static byte[] state = new byte[200];
-    public static void main(String[] args) throws Exception { 
+    public static void main(String[] args) throws Exception {
         // Testing the different required functions.
 //        int encodeTest = 0;
 //        byte[] leftTest = left_encode(new BigInteger("" + encodeTest));
@@ -55,26 +55,30 @@ public class TCSS487Project {
 //        sha3_keccakf(state);
 //        System.out.println(Arrays.toString(state));
 
-        System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 1024, "D".getBytes())));
+        // System.out.println(bytesToHex(KMACXOF256("".getBytes(), "Secret".getBytes(), 1024, "D".getBytes())));
 //        System.out.println(Arrays.toString(cShake256()));
 //        System.out.println(bytesToHex(encode_string("Email Signature".getBytes())));
     }
 
+    // Simulates bit rotation.
+    private static long RotateLeft(long x, int y) {
+        return (x << y) | (x >>> (64 - y));
+    }
 
     /**
      * The very easy to understand keccak core algorithm.
      */
     public static void sha3_keccakf(byte[] stateArg) {
         long[] q = new long[25];
-        long[] bc = new long[6];
+        long[] bc = new long[5];
 
         // Endian conversion.
         int counter = 0;
         for (int i = 0; i < q.length; i++) {
             q[i] =  (((long) stateArg[counter + 0] & 0xFFL)) | (((long) stateArg[counter + 1] & 0xFFL) << 8) |
-                        (((long) stateArg[counter + 2] & 0xFFL) << 16) | (((long) stateArg[counter + 3] & 0xFFL) << 24) |
-                        (((long) stateArg[counter + 4] & 0xFFL) << 32) | (((long) stateArg[counter + 5] & 0xFFL) << 40) |
-                        (((long) stateArg[counter + 6] & 0xFFL) << 48) | (((long) stateArg[counter + 7] & 0xFFL) << 56);
+                    (((long) stateArg[counter + 2] & 0xFFL) << 16) | (((long) stateArg[counter + 3] & 0xFFL) << 24) |
+                    (((long) stateArg[counter + 4] & 0xFFL) << 32) | (((long) stateArg[counter + 5] & 0xFFL) << 40) |
+                    (((long) stateArg[counter + 6] & 0xFFL) << 48) | (((long) stateArg[counter + 7] & 0xFFL) << 56);
             counter += 8;
         }
 
@@ -85,9 +89,9 @@ public class TCSS487Project {
             for (int i = 0; i < 5; i++) {
                 bc[i] = q[i] ^ q[i + 5] ^ q[i + 10] ^ q[i + 15] ^ q[i + 20];
             }
-            
+
             for (int i = 0; i < 5; i++) {
-                long t = bc[(i + 4) % 5] ^ Long.rotateLeft(bc[(i + 1)] % 5, 1);
+                long t = bc[(i + 4) % 5] ^ RotateLeft(bc[(i + 1) % 5], 1);
                 for (int j = 0; j < 25; j += 5) {
                     q[j + 1] ^= t;
                 }
@@ -98,7 +102,7 @@ public class TCSS487Project {
             for (int i = 0; i < 24; i++) {
                 int j = keccakf_piln[i];
                 bc[0] = q[j];
-                q[j] = Long.rotateLeft(t, keccakf_rotc[i]);
+                q[j] = RotateLeft(t, keccakf_rotc[i]);
                 t = bc[0];
             }
 
@@ -173,7 +177,7 @@ public class TCSS487Project {
         sha3_update(in, inlen);
         return sha3_final();
     }
-    
+
     // SHAKE128 and SHAKE256 extensible-output functionality.
     public static void shake_xof() {
         state[pt] ^= 0x1F;
@@ -203,7 +207,7 @@ public class TCSS487Project {
      * @param x The BigInteger to be used to to encode the byte array.
      * @return The computed byte array.
      */
-	public static byte[] right_encode(BigInteger x){
+    public static byte[] right_encode(BigInteger x){
 
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
@@ -238,7 +242,7 @@ public class TCSS487Project {
      * @param x The BigInteger to be used to to encode the byte array.
      * @return The computed byte array.
      */
-	public static byte[] left_encode(BigInteger x){
+    public static byte[] left_encode(BigInteger x){
 
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
@@ -268,12 +272,12 @@ public class TCSS487Project {
 
 
     /**
-    * This code is from Professor Barreto's Week 2 Slides.
-    * Apply the NIST bytepad primitive to a byte array X with encoding factor w.
-    * @param X the byte array to bytepad
-    * @param w the encoding factor (the output length must be a multiple of w)
-    * @return the byte-padded byte array X with encoding factor w.
-    */
+     * This code is from Professor Barreto's Week 2 Slides.
+     * Apply the NIST bytepad primitive to a byte array X with encoding factor w.
+     * @param X the byte array to bytepad
+     * @param w the encoding factor (the output length must be a multiple of w)
+     * @return the byte-padded byte array X with encoding factor w.
+     */
     private static byte[] bytepad(byte[] X, BigInteger w) {
         // Validity Conditions: w > 0
         assert w.intValue() > 0;
@@ -286,11 +290,11 @@ public class TCSS487Project {
         // 2. (nothing to do: len(z) mod 8 = 0 in this byte-oriented implementation)
         // 3. while (len(z)/8) mod w ≠ 0: z = z || 00000000
         for (int i = wenc.length + X.length; i < z.length; i++) {
-        z[i] = (byte)0;
+            z[i] = (byte)0;
         }
         // 4. return z
         return z;
-        }
+    }
 
     /**
      * Computes two byte arrays from the given bit strings.
@@ -305,7 +309,7 @@ public class TCSS487Project {
         if (bitString.length == 0) {
             return leftEncodeResult;
         }
-        
+
         // Computing the byte array from the length of the given bit string.
         int resultLength = bitString.length + leftEncodeResult.length;
         byte[] result = new byte[resultLength];
