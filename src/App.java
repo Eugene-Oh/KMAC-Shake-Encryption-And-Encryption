@@ -76,8 +76,6 @@ public class App {
                             System.out.println("Maybe you choose a wrong file or a wrong pass phrase.");
                         }
                     }
-
-                    System.out.println(4);
                 }
                 else if (choice == 5) {
                     System.out.println("Exiting...");
@@ -176,6 +174,7 @@ public class App {
                 objectIn.close();
                 return obj;
             } catch (Exception e) {
+                System.out.println("Must be an Java object file");
                 e.printStackTrace();
             }
         }
