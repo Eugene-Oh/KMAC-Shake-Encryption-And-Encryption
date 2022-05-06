@@ -279,7 +279,7 @@ public class Shake {
             z[i] = (byte)0;
         }
         // 4. return z
-        System.out.println("The bytepad: " + Shake.bytesToHex(z).replaceAll("..", "$0 "));
+//        System.out.println("The bytepad: " + Shake.bytesToHex(z));
         return z;
     }
 
@@ -380,6 +380,6 @@ public class Shake {
             hexChars[j * 2] = HEX_ARRAY[v >>> 4];
             hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
-        return new String(hexChars, StandardCharsets.UTF_8);
+        return new String(hexChars, StandardCharsets.UTF_8).replaceAll("..", "$0 ");
     }
 }

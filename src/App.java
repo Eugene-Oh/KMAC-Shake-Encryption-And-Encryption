@@ -1,9 +1,10 @@
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
-import java.io.File;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLOutput;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -38,7 +39,9 @@ public class App {
                 if (choice == 1){
                     M = getFile();
                     result = Shake.KMACXOF256(K, M, 512, S);
-                    System.out.println("Plain cryptographic hash result: " + Shake.bytesToHex(result));
+                    System.out.println("Plain cryptographic hash result: \n"
+                            + Shake.bytesToHex(result)
+                            + "\n");
 
                     }
                 else if (choice == 2){
@@ -46,7 +49,9 @@ public class App {
                     str = sc.next();
                     M = str.getBytes();
                     result = Shake.KMACXOF256(K, M, 512, S);
-                    System.out.println("Plain cryptographic hash result: " + Shake.bytesToHex(result));
+                    System.out.println("Plain cryptographic hash result: \n"
+                            + Shake.bytesToHex(result)
+                            + "\n");
                 }
                 else if (choice == 3){
                     System.out.println("Please choose a file");
@@ -54,8 +59,24 @@ public class App {
                     System.out.print("Please enter you passphrase: ");
                     passphrase = sc.next();
                     sym = enc.encrypt(M,passphrase);
+                    saveFile(sym);
                 }
                 else if (choice == 4){
+                    Object obj = openFile();
+                    if (obj != null){
+                        SymmetricCryptogram sym2 = (SymmetricCryptogram) obj;
+                        System.out.print("Please enter you passphrase: ");
+                        passphrase = sc.next();
+                        byte[] decryptObj = enc.decrypt(sym2,passphrase);
+                        if (decryptObj != null){
+                            System.out.println("Your byte code:");
+                            System.out.println(Shake.bytesToHex(decryptObj));
+                        }
+                        else{
+                            System.out.println("Maybe you choose a wrong file or a wrong pass phrase.");
+                        }
+                    }
+
                     System.out.println(4);
                 }
                 else if (choice == 5) {
@@ -110,5 +131,54 @@ public class App {
             }
         }
         return result;
+    }
+
+    /**
+     * Save the encryption file to a specific location
+     * @param obj SymmetricCryptogram file
+     */
+    private static void saveFile(final SymmetricCryptogram obj){
+        JDialog dialog = new JDialog();
+        chooser.setCurrentDirectory(FileSystemView.getFileSystemView().getHomeDirectory());
+        chooser.setDialogTitle("Save");
+        int retValue = chooser.showSaveDialog(dialog);
+        if (retValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try (FileOutputStream fos = new FileOutputStream(selectedFile.getAbsolutePath());
+                 ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(obj);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Open an encrypted file to decrypt
+     * @return null if not an Java Object file
+     *         otherwise return a Java object
+     */
+    private static Object openFile(){
+        JDialog dialog = new JDialog();
+        chooser.setCurrentDirectory(FileSystemView.getFileSystemView().getHomeDirectory());
+        int retValue = chooser.showOpenDialog(dialog);
+        File selectedFile = null;
+        if (retValue == JFileChooser.APPROVE_OPTION) {
+            selectedFile = chooser.getSelectedFile();
+            try {
+                FileInputStream fileIn = new FileInputStream(selectedFile.getAbsolutePath());
+                ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+                Object obj = objectIn.readObject();
+                if (obj.getClass() != SymmetricCryptogram.class){
+                    System.out.println("Not a encryption file.");
+                    return null;
+                }
+                objectIn.close();
+                return obj;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 }
