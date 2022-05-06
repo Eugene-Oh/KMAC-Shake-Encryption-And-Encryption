@@ -101,11 +101,6 @@ public class App {
                 sc.next();
             }
         }
-        // Test encryption
-//        byte[] decrypt_byte = enc.decrypt(sym, passphrase);
-//
-//        System.out.println();
-//        System.out.println(Arrays.equals(M,decrypt_byte));
     }
 
     /**
@@ -113,7 +108,6 @@ public class App {
      * @return converted byte array from a chosen file
      */
     private static byte[] getFile(){
-//        JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         JDialog dialog = new JDialog();
         chooser.setCurrentDirectory(FileSystemView.getFileSystemView().getHomeDirectory());
         int retValue = chooser.showOpenDialog(dialog);
