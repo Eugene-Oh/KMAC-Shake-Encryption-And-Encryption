@@ -19,6 +19,7 @@ public class App {
                         + "2. Give a string\n"
                         + "3. Encrypt a given data file symmetrically under a given passphrase\n"
                         + "4. Decrypt a given symmetric cryptogram under a given passphrase\n"
+                        + "5. Exit\n"
                         + "Your choice: ");
         int choice = 0;
         byte[] S; //diversification string
@@ -31,7 +32,7 @@ public class App {
         S = "D".getBytes();
         K = "".getBytes();
         String str = "";
-        while (sc.hasNext()){
+        while (choice != 5){
             if (sc.hasNextInt()){
                 choice = sc.nextInt();
                 if (choice == 1){
@@ -57,7 +58,18 @@ public class App {
                 else if (choice == 4){
                     System.out.println(4);
                 }
-                break;
+                else if (choice == 5) {
+                    System.out.println("Exiting...");
+                    break;
+                }
+//              break;
+                System.out.println("Please choose an option:");
+                System.out.print("1. Open a file \n"
+                        + "2. Give a string\n"
+                        + "3. Encrypt a given data file symmetrically under a given passphrase\n"
+                        + "4. Decrypt a given symmetric cryptogram under a given passphrase\n"
+                        + "5. Exit\n"
+                        + "Your choice: ");
             }
             else {
                 System.out.println("\nMust choose 1, 2, 3, or 4.");
@@ -65,15 +77,16 @@ public class App {
                         + "2. Give a string\n"
                         + "3. Encrypt a given data file symmetrically under a given passphrase\n"
                         + "4. Decrypt a given symmetric cryptogram under a given passphrase\n"
+                        + "5. Exit\n"
                         + "Your choice: ");
                 sc.next();
             }
         }
         // Test encryption
-        byte[] decrypt_byte = enc.decrypt(sym, passphrase);
-
-        System.out.println();
-        System.out.println(Arrays.equals(M,decrypt_byte));
+//        byte[] decrypt_byte = enc.decrypt(sym, passphrase);
+//
+//        System.out.println();
+//        System.out.println(Arrays.equals(M,decrypt_byte));
     }
 
     /**
