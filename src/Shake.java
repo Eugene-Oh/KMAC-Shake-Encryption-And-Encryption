@@ -226,7 +226,10 @@ public class Shake {
 
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
-        // x = ∑ 28(n-i) xi, for i = 1 to n.
+        // x = ∑ 28(n-i) xi, for i = 1 to n
+        int xInt = x.intValue() << 3;
+        x = BigInteger.valueOf(xInt);
+
         byte[] bytes = x.toByteArray();
         int lengthOfByteArray = bytes.length;
         byte[] padding = BigInteger.valueOf(lengthOfByteArray).toByteArray();
@@ -273,6 +276,7 @@ public class Shake {
             z[i] = (byte)0;
         }
         // 4. return z
+        System.out.println("The bytepad: " + Shake.bytesToHex(z).replaceAll("..", "$0 "));
         return z;
     }
 
@@ -297,6 +301,7 @@ public class Shake {
         // Combine the result with the given bit string.
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
+        System.out.println("The encode_string: " + Shake.bytesToHex(result).replaceAll("..", "$0 "));
         return result;
     }
     /**
@@ -317,10 +322,10 @@ public class Shake {
 
     /**
      *
-     * @param X
-     * @param L
-     * @param N
-     * @param S
+     * @param X The main input bit string. May be of any length, including 0.
+     * @param L Integer representing the requested output length in bits.
+     * @param N Function-name bit string to define function used.
+     * @param S Bit string that defines the variant of the function that is desired.
      * @return
      */
     static byte[] cShake256(byte[] X, int L, byte[] N, byte[] S){
