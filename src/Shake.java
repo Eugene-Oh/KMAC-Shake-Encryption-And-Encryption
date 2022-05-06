@@ -192,6 +192,9 @@ public class Shake {
         // Step 1 is not needed from the NIST pseudocode.
         // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
         // x = ∑ 28(n-i) xi, for i = 1 to n.
+        int xInt = x.intValue() << 3;
+        x = BigInteger.valueOf(xInt);
+
         byte[] bytes = x.toByteArray();
         int lengthOfByteArray = bytes.length;
         byte[] padding = BigInteger.valueOf(lengthOfByteArray).toByteArray();
@@ -301,7 +304,7 @@ public class Shake {
         // Combine the result with the given bit string.
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
-        System.out.println("The encode_string: " + Shake.bytesToHex(result).replaceAll("..", "$0 "));
+//        System.out.println("The encode_string: " + Shake.bytesToHex(result).replaceAll("..", "$0 "));
         return result;
     }
     /**
@@ -333,6 +336,9 @@ public class Shake {
         byte[] result = new byte[L];
         shake.sha3_init();
         if ((N != null && N.length != 0) || (S != null && S.length != 0)){
+            //System.out.println("The encode_string(N): " + Shake.bytesToHex(encode_string(N)).replaceAll("..", "$0 "));
+            //System.out.println("The encode_string(S): " + Shake.bytesToHex(encode_string(S)).replaceAll("..", "$0 "));
+            //System.out.println("The concat: " + Shake.bytesToHex(concat(encode_string(N),encode_string(S))).replaceAll("..", "$0 "));
             byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
             shake.sha3_update(combination, combination.length);
         }
