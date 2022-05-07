@@ -79,7 +79,7 @@ public class App {
                 }
                 else if (choice == 5) {
                     System.out.println("Exiting...");
-                    break;
+                    System.exit(0);
                 }
 //              break;
                 System.out.println("Please choose an option:");
@@ -91,7 +91,7 @@ public class App {
                         + "Your choice: ");
             }
             else {
-                System.out.println("\nMust choose 1, 2, 3, or 4.");
+                System.out.println("\nMust choose 1, 2, 3, 4, or 5.");
                 System.out.print("1. Open a file \n"
                         + "2. Give a string\n"
                         + "3. Encrypt a given data file symmetrically under a given passphrase\n"
