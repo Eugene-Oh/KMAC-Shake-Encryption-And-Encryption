@@ -245,7 +245,7 @@ public class Shake {
             z[i] = (byte)0;
         }
         // 4. return z
-        System.out.println("The bytepad: " + Shake.bytesToHex(z));
+        // System.out.println("The bytepad: " + Shake.bytesToHex(z));
         return z;
     }
 
