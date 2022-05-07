@@ -1,6 +1,7 @@
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
 // All functions were based off of mjorsaarinen's tiny_sha3 implementation on GitHub
@@ -156,7 +157,7 @@ public class Shake {
     public static void shake_xof() {
 
 
-        byte[] right_encode = right_encode(BigInteger.valueOf(0));
+        byte[] right_encode = right_encode(0);
         sha3_update(right_encode, right_encode.length);
 
 
@@ -180,82 +181,47 @@ public class Shake {
     }
 
     /**
-     * Computes a byte array from a given BigInteger based of encoding from the right.
-     * It achieves this by computing a byte array that represents the actual number and
-     * another byte array that represents the number of bytes in the previous byte array
-     * and combines them.
-     * @param x The BigInteger to be used to to encode the byte array.
+     * Computes a byte array from a given integer.
+     * @param x The integer to be used to to encode the byte array.
      * @return The computed byte array.
      */
-    static byte[] right_encode(BigInteger x){
-
-        // Step 1 is not needed from the NIST pseudocode.
-        // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
-        // x = ∑ 28(n-i) xi, for i = 1 to n.
-        int xInt = x.intValue() << 3;
-        x = BigInteger.valueOf(xInt);
-
-        byte[] bytes = x.toByteArray();
-        int lengthOfByteArray = bytes.length;
-        byte[] padding = BigInteger.valueOf(lengthOfByteArray).toByteArray();
-        int lengthOfPaddingByteArray = padding.length;
-        byte[] result = new byte[lengthOfByteArray + lengthOfPaddingByteArray];
-
-        // 4. Let Oi = enc8(xi), for i = 1 to n.
-        int i = 0;
-        while (i < lengthOfByteArray) {
-            result[i] = bytes[i];
-            i++;
+    public static byte[] right_encode(final int x){
+        int n = 1;
+        while (1<<(8*n) <= x){
+            n++;
         }
-
-        // 3. Let On+1 = enc8(n).
-        int j = 0;
-        while (j < lengthOfPaddingByteArray) {
-            result[j + lengthOfByteArray] = padding[j];
-            j++;
+        byte[] x_list = new byte[n+1];
+        for (int i = 1; i <= n; i++){
+            x_list[i] = (byte) (x>>>(8*(n-i)));
         }
-        return result;
+        x_list[0] = (byte) n;
+
+        // Swapping for right encode.
+        byte[] swapped_result = new byte[n+1];
+        for (int i = 1; i <= n; i++) {
+            swapped_result[i - 1] = x_list[i];
+        }
+        swapped_result[n] = x_list[0];
+        return swapped_result;
     }
 
     /**
-     * Computes a byte array from a given BigInteger based of encoding from the left.
-     * It achieves this by computing a byte array that represents the actual number and
-     * another byte array that represents the number of bytes in the previous byte array
-     * and combines them.
-     * @param x The BigInteger to be used to to encode the byte array.
+     * Computes a byte array from a given integer.
+     * @param x The integer to be used to to encode the byte array.
      * @return The computed byte array.
      */
-    static byte[] left_encode(BigInteger x){
-
-        // Step 1 is not needed from the NIST pseudocode.
-        // 2. Let x1, x2,…, xn be the base-256 encoding of x satisfying:
-        // x = ∑ 28(n-i) xi, for i = 1 to n
-        int xInt = x.intValue() << 3;
-        x = BigInteger.valueOf(xInt);
-
-        byte[] bytes = x.toByteArray();
-        int lengthOfByteArray = bytes.length;
-        byte[] padding = BigInteger.valueOf(lengthOfByteArray).toByteArray();
-        int lengthOfPaddingByteArray = padding.length;
-        byte[] result = new byte[lengthOfByteArray + lengthOfPaddingByteArray];
-
-        // 4. Let O0 = enc8(n).
-        int i = 0;
-        while (i < lengthOfPaddingByteArray) {
-            result[i] = padding[i];
-            i++;
+    public static byte[] left_encode(final int x)  {
+        int n = 1;
+        while (1<<(8*n) <= x){
+            n++;
         }
-
-        // 3. Let Oi = enc8(xi), for i = 1 to n.
-        int j = 0;
-        while (j < lengthOfByteArray) {
-            result[j + lengthOfPaddingByteArray] = bytes[j];
-            j++;
+        byte[] x_list = new byte[n+1];
+        for (int i = 1; i <= n; i++){
+            x_list[i] = (byte) (x>>>(8*(n-i)));
         }
-        return result;
+        x_list[0] = (byte) n;
+        return x_list;
     }
-
-
 
     /**
      * This code is from Professor Barreto's Week 2 Slides.
@@ -268,7 +234,7 @@ public class Shake {
         // Validity Conditions: w > 0
         assert w.intValue() > 0;
         // 1. z = left_encode(w) || X.
-        byte[] wenc = left_encode(w);
+        byte[] wenc = left_encode(w.intValue());
         byte[] z = new byte[w.intValue()*((wenc.length + X.length + w.intValue() - 1)/w.intValue())];
         // NB: z.length is the smallest multiple of w that fits wenc.length + X.length
         System.arraycopy(wenc, 0, z, 0, wenc.length);
@@ -279,7 +245,7 @@ public class Shake {
             z[i] = (byte)0;
         }
         // 4. return z
-//        System.out.println("The bytepad: " + Shake.bytesToHex(z));
+        System.out.println("The bytepad: " + Shake.bytesToHex(z));
         return z;
     }
 
@@ -290,7 +256,7 @@ public class Shake {
      */
     static byte[] encode_string(byte[] bitString) {
         BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
-        byte[] leftEncodeResult = left_encode(bitStringLength);
+        byte[] leftEncodeResult = left_encode(bitString.length << 3);
 
         // An empty bit string is passed.
         if (bitString.length == 0) {
@@ -304,7 +270,6 @@ public class Shake {
         // Combine the result with the given bit string.
         System.arraycopy(leftEncodeResult, 0, result, 0, leftEncodeResult.length);
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
-//        System.out.println("The encode_string: " + Shake.bytesToHex(result).replaceAll("..", "$0 "));
         return result;
     }
     /**
@@ -336,9 +301,6 @@ public class Shake {
         byte[] result = new byte[L];
         shake.sha3_init();
         if ((N != null && N.length != 0) || (S != null && S.length != 0)){
-            //System.out.println("The encode_string(N): " + Shake.bytesToHex(encode_string(N)).replaceAll("..", "$0 "));
-            //System.out.println("The encode_string(S): " + Shake.bytesToHex(encode_string(S)).replaceAll("..", "$0 "));
-            //System.out.println("The concat: " + Shake.bytesToHex(concat(encode_string(N),encode_string(S))).replaceAll("..", "$0 "));
             byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
             shake.sha3_update(combination, combination.length);
         }
@@ -358,7 +320,8 @@ public class Shake {
      */
     static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
         byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
-        byte[] rightEncodeL = right_encode(BigInteger.valueOf(L));
+        byte[] rightEncodeL = right_encode(L);
+        
         newX = concat(newX, X);
         newX = concat(newX, rightEncodeL);
         return cShake256(newX, L, "KMAC".getBytes(), S);
