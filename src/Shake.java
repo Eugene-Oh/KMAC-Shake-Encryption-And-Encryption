@@ -1,17 +1,16 @@
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
 
 // TCSS 487 Project - Alex Trinh, Eugene Oh.
 // All functions were based off of mjorsaarinen's tiny_sha3 implementation on GitHub
 // and the SHA-3 NIST documentation.
-
-// I HAVE NO CLUE IF ANY OF THIS WORKS HAVE NOT TESTED.
 public class Shake {
 
     private static final int KECCAKF_ROUNDS = 24;
     private static int mdlen, rsiz, pt;
+    private static boolean KMACMode = false;
+    private static boolean XOFCheck = false;
     private static byte[] state = new byte[200];
 
     private static final long[] keccakf_rndc = {
@@ -40,9 +39,7 @@ public class Shake {
         return (x << y) | (x >>> (64 - y));
     }
 
-    /**
-     * The very easy to understand keccak core algorithm.
-     */
+    // The very easy to understand keccak algorithm.
     static void sha3_keccakf(byte[] stateArg) {
         long[] q = new long[25];
         long[] bc = new long[5];
@@ -64,11 +61,10 @@ public class Shake {
             for (int i = 0; i < 5; i++) {
                 bc[i] = q[i] ^ q[i + 5] ^ q[i + 10] ^ q[i + 15] ^ q[i + 20];
             }
-
             for (int i = 0; i < 5; i++) {
                 long t = bc[(i + 4) % 5] ^ RotateLeft(bc[(i + 1) % 5], 1);
                 for (int j = 0; j < 25; j += 5) {
-                    q[j + 1] ^= t;
+                    q[j + i] ^= t;
                 }
             }
 
@@ -120,6 +116,18 @@ public class Shake {
         pt = 0;
     }
 
+    // Initialization for KMAC.
+    public static void KMAC_init(byte[] K, byte[] S, byte[] KMAC) {
+        byte[] encK = bytepad(encode_string(K), BigInteger.valueOf(136));
+        sha3_init();
+        if ((KMAC != null && KMAC.length != 0) || (S != null && S.length != 0)){
+            XOFCheck = true;
+            byte[] combination = bytepad(concat(encode_string(KMAC),encode_string(S)), BigInteger.valueOf(136));
+            sha3_update(combination, combination.length);
+        }
+        sha3_update(encK, encK.length);
+    }
+
     // Updating the state with more data.
     public static void sha3_update(byte[] data, int len) {
         int j = pt;
@@ -138,7 +146,6 @@ public class Shake {
         state[pt] ^= 0x06;
         state[rsiz - 1] ^= 0x80;
         sha3_keccakf(state);
-
         byte[] md = new byte[mdlen];
         for (int i = 0; i < mdlen; i++) {
             md[i] = state[i];
@@ -155,14 +162,17 @@ public class Shake {
 
     // SHAKE128 and SHAKE256 extensible-output functionality.
     public static void shake_xof() {
-
-
-        byte[] right_encode = right_encode(0);
-        sha3_update(right_encode, right_encode.length);
-
-
-        state[pt] ^= (byte)0x1F;
+        if (KMACMode) {
+            byte[] right_encode = right_encode(0);
+            sha3_update(right_encode, right_encode.length);
+        }
+        if (XOFCheck) {
+            state[pt] ^= (byte)0x04;
+        } else {
+            state[pt] ^= (byte)0x1F;
+        }
         state[rsiz - 1] ^= (byte)0x80;
+
         sha3_keccakf(state);
         pt = 0;
     }
@@ -245,7 +255,6 @@ public class Shake {
             z[i] = (byte)0;
         }
         // 4. return z
-        // System.out.println("The bytepad: " + Shake.bytesToHex(z));
         return z;
     }
 
@@ -272,6 +281,7 @@ public class Shake {
         System.arraycopy(bitString, 0, result, leftEncodeResult.length, bitString.length);
         return result;
     }
+
     /**
      * Concatenates a and b to a new byte array
      * @param a the first array
@@ -279,7 +289,6 @@ public class Shake {
      * @return A byte array combined from two given a and b array
      */
     public static byte[] concat(final byte[] a, final byte[] b){
-
         int alen = (a != null) ? a.length : 0;
         int blen = (b != null) ? b.length : 0;
         byte[] c = new byte[alen + blen];
@@ -301,40 +310,43 @@ public class Shake {
         byte[] result = new byte[L];
         shake.sha3_init();
         if ((N != null && N.length != 0) || (S != null && S.length != 0)){
+            XOFCheck = true;
             byte[] combination = bytepad(concat(encode_string(N),encode_string(S)), BigInteger.valueOf(136));
             shake.sha3_update(combination, combination.length);
         }
         shake.sha3_update(X, X.length);
+
         shake.shake_xof();
-        shake.shake_out(result, result.length);
-        return result;
+        byte[] result_cut = new byte[result.length >>> 3];
+        shake.shake_out(result_cut, result.length >>> 3);
+        return result_cut;
     }
 
     /**
      *
-     * @param K
-     * @param X
-     * @param L
-     * @param S
+     * @param K Key bit string of any length.
+     * @param X Main input bit string on any length.
+     * @param L Requested output length.
+     * @param S Optional customization bit string.
      * @return
      */
     static byte[] KMACXOF256(byte[] K, byte[] X, int L, byte[] S){
-        byte[] newX = bytepad(encode_string(K), BigInteger.valueOf(136));
-        byte[] rightEncodeL = right_encode(L);
-        
-        newX = concat(newX, X);
-        newX = concat(newX, rightEncodeL);
-        return cShake256(newX, L, "KMAC".getBytes(), S);
-
+        Shake shake = new Shake();
+        KMACMode = true;
+        byte[] result = new byte[L];
+        shake.KMAC_init(K, S, "KMAC".getBytes());
+        shake.sha3_update(X, X.length);
+        shake.shake_xof();
+        byte[] result_cut = new byte[result.length >>> 3];
+        shake.shake_out(result_cut, result.length >>> 3);
+        return result_cut;
     }
-
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
 
     /**
-     *
-     * @param bytes
-     * @return
+     * @param bytes To be converted.
+     * @return Hex representation of byte array.
      */
     static String bytesToHex(byte[] bytes) {
         byte[] hexChars = new byte[bytes.length * 2];
