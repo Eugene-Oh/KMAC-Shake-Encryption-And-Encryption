@@ -13,6 +13,7 @@ public class Test {
         KMACTest();
         KMACTest2();
         KMACTest3();
+        EncryptionDecryptionTest();
     }
 
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
@@ -116,6 +117,30 @@ public class Test {
         System.out.println("KMAC RESULT : " + Shake.bytesToHex(test2));
         System.out.println("Are they equal: " + desiredResult.equals(Shake.bytesToHex(test2)));
         System.out.println();
+    }
+
+    public static void EncryptionDecryptionTest() {
+        System.out.println("Encryption Decryption Test ");
+        String passPhrase = "secret_passphrase";
+        String randomString = "arandom@password.@#";
+        byte[] M = randomString.getBytes();
+        Encryption enc = new Encryption();
+        byte[] decrypt_symmetric_cryptogram;
+//        Encryption and decryption test
+//        Same pass phrase
+        SymmetricCryptogram sym = enc.encrypt(M, passPhrase);
+        decrypt_symmetric_cryptogram = enc.decrypt(sym,passPhrase);
+        System.out.println("Decryption Using Same Correct Pass: " + Arrays.equals(decrypt_symmetric_cryptogram, M));
+//        Different pass phrase
+        String wrong_passphrase = "not a passphrase";
+        byte[] wrong_decrypt_symmetric_cryptogram;
+        wrong_decrypt_symmetric_cryptogram = enc.decrypt(sym,wrong_passphrase);
+        //Same pass phrase
+        System.out.println("Compare two byte arrays with same pass phrase " +
+                "and same symmetric cryptogram result: "
+                + Arrays.equals(decrypt_symmetric_cryptogram, M));
+        //Different pass phrase
+        System.out.println("Wrong pass phrase result: " + wrong_decrypt_symmetric_cryptogram);
     }
 
     // Used to convert keys to byte arrays.

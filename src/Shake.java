@@ -337,8 +337,14 @@ public class Shake {
         shake.KMAC_init(K, S, "KMAC".getBytes());
         shake.sha3_update(X, X.length);
         shake.shake_xof();
-        byte[] result_cut = new byte[result.length >>> 3];
-        shake.shake_out(result_cut, result.length >>> 3);
+        // HERE IS THE CAUSE OF THE ENCRYPTION/DECRYPTION ERROR ([result.length >>> 3] vs [result.length]) ---------------------
+        // Having it here causes enc/dec to stop functioning, but it passes all of the tests.
+        // Not having it allows enc/dec to work, but it does not pass all of the tests because
+        // the outputted byte array is too long. It is the correct input, but not trimmed.
+        // May be something wrong inside of enc/dec functions.
+        byte[] result_cut = new byte[result.length >>> 3]; // vs. [result.length];
+        shake.shake_out(result_cut, result.length >>> 3); // vs. result.length);
+        // HERE IS THE CAUSE OF THE ENCRYPTION/DECRYPTION ERROR ([result.length >>> 3] vs [result.length]) ---------------------
         return result_cut;
     }
 
