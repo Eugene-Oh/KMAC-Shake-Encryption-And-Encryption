@@ -11,6 +11,8 @@ public class EllipticCurvePoint {
             "904961214051226618635150085779108655765"));
     private BigInteger d = new BigInteger("-376014");
 
+    public static EllipticCurvePoint G = new EllipticCurvePoint(BigInteger.valueOf(4), false);
+
     // Constructor for given elements.
     public EllipticCurvePoint(BigInteger x, BigInteger y) {
         myX = x;
@@ -69,7 +71,7 @@ public class EllipticCurvePoint {
     }
 
     // Scalar multiplication formula from the pseudocode in the project specification sheet.
-    public EllipticCurvePoint scalarMultiplcation(EllipticCurvePoint P, BigInteger s) {
+    public static EllipticCurvePoint scalarMultiplcation(EllipticCurvePoint P, BigInteger s) {
         EllipticCurvePoint V = P;
         String temp = s.toString();
         int k = temp.length();
