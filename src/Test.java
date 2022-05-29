@@ -1,5 +1,4 @@
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -8,12 +7,19 @@ import java.util.Arrays;
 public class Test {
 
     public static void main(String[] args) {
-        ShakeTest();
-        ShakeTest2();
-        KMACTest();
-        KMACTest2();
-        KMACTest3();
-        EncryptionDecryptionTest();
+//        ShakeTest();
+//        ShakeTest2();
+//        KMACTest();
+//        KMACTest2();
+//        KMACTest3();
+//        EncryptionDecryptionTest();
+//        PointEncryptionDecryptionTest();
+//        SignatureTest();
+    }
+
+    private static void EllipticCurvePointTest() {
+        EllipticCurvePoint test = new EllipticCurvePoint();
+        System.out.println(test.getY());
     }
 
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
@@ -128,13 +134,13 @@ public class Test {
         byte[] decrypt_symmetric_cryptogram;
 //        Encryption and decryption test
 //        Same pass phrase
-        SymmetricCryptogram sym = enc.encrypt(M, passPhrase);
-        decrypt_symmetric_cryptogram = enc.decrypt(sym,passPhrase);
+        SymmetricCryptogram sym = enc.Encryption(M, passPhrase);
+        decrypt_symmetric_cryptogram = enc.Decryption(sym,passPhrase);
         System.out.println("Decryption Using Same Correct Pass: " + Arrays.equals(decrypt_symmetric_cryptogram, M));
 //        Different pass phrase
         String wrong_passphrase = "not a passphrase";
         byte[] wrong_decrypt_symmetric_cryptogram;
-        wrong_decrypt_symmetric_cryptogram = enc.decrypt(sym,wrong_passphrase);
+        wrong_decrypt_symmetric_cryptogram = enc.Decryption(sym,wrong_passphrase);
         //Same pass phrase
         System.out.println("Compare two byte arrays with same pass phrase " +
                 "and same symmetric cryptogram result: "
@@ -142,6 +148,40 @@ public class Test {
         //Different pass phrase
         System.out.println("Wrong pass phrase result: " + wrong_decrypt_symmetric_cryptogram);
     }
+
+    public static void PointEncryptionDecryptionTest() {
+        System.out.println("Encryption Decryption Test ");
+        String passPhrase = "secret_passphrase";
+        byte[] pw = passPhrase.getBytes();
+        System.out.println("The pass: " + Shake.bytesToHex(pw));
+        EllipticCurvePoint V = new EllipticCurvePoint(BigInteger.valueOf(12312), BigInteger.valueOf(142145252));
+        Encryption enc = new Encryption();
+
+        PointCryptogram point = enc.PointEncryption(pw, V);
+        byte[] result = enc.PointDecryption(point, pw);
+        System.out.println("Decryption Using SAME Correct Pass: " + Shake.bytesToHex(result));
+
+        String wrong_passphrase = "";
+        byte[] wrong_pw = wrong_passphrase.getBytes();
+        byte[] wrong_result = enc.PointDecryption(point,pw);
+        System.out.println("Decryption Using WRONG Correct Pass: " + Shake.bytesToHex(wrong_result));
+    }
+
+    public static void SignatureTest() {
+        System.out.println("Signature Test ");
+        byte[] pw = "pw".getBytes();
+        byte[] m = "The message".getBytes();
+        EllipticCurvePoint V = new EllipticCurvePoint(BigInteger.valueOf(12312), BigInteger.valueOf(142145252));
+        Encryption enc = new Encryption();
+        BigInteger[] result = enc.GenerateSignature(m, pw);
+        byte[] verifyResult = enc.VerifySignature(result, m, V);
+        if (verifyResult != null) {
+            System.out.println("yep");
+        } else {
+            System.out.println("nope");
+        }
+    }
+
 
     // Used to convert keys to byte arrays.
     public static byte[] hexToByte(String s) {

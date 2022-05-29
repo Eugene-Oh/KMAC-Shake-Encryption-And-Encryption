@@ -1,15 +1,16 @@
+import java.io.Serializable;
 import java.math.BigInteger;
 
 // This class represents a single point on Edward's Curve.
-public class EllipticCurvePoint {
-    private BigInteger myX;
-    private BigInteger myY;
+public class EllipticCurvePoint implements Serializable {
+    private static BigInteger myX;
+    private static BigInteger myY;
 
-    private BigInteger MersennePrime = new BigInteger("2").pow(521).subtract(new BigInteger("1"));
-    private BigInteger r = new BigInteger("2").pow(519).subtract(new BigInteger(
+    private static BigInteger MersennePrime = new BigInteger("2").pow(521).subtract(new BigInteger("-1"));
+    public static BigInteger r = new BigInteger("2").pow(519).subtract(new BigInteger(
             "337554763258501705789107630418782636071" +
             "904961214051226618635150085779108655765"));
-    private BigInteger d = new BigInteger("-376014");
+    private static BigInteger d = new BigInteger("-376014");
 
     public static EllipticCurvePoint G = new EllipticCurvePoint(BigInteger.valueOf(4), false);
 
@@ -40,7 +41,7 @@ public class EllipticCurvePoint {
         }
     }
 
-    public boolean compare(EllipticCurvePoint point) {
+    public static boolean compare(EllipticCurvePoint point) {
         if (point.getX().equals(myX) && point.getY().equals(myY)) {
             return true;
         } else {
@@ -48,13 +49,14 @@ public class EllipticCurvePoint {
         }
     }
 
-    public EllipticCurvePoint opposite(EllipticCurvePoint point) {
+    public static EllipticCurvePoint opposite(EllipticCurvePoint point) {
         BigInteger resultX = point.getX().modInverse(MersennePrime);
         BigInteger resultY = point.getY().modInverse(MersennePrime);
         return new EllipticCurvePoint(resultX, resultY);
     }
 
-    public EllipticCurvePoint addPoints(EllipticCurvePoint otherPoint) {
+    // Addition of current and other point based on the equation from the project specification sheet.
+    public static EllipticCurvePoint addPoints(EllipticCurvePoint otherPoint) {
         BigInteger x1 = myX;
         BigInteger y1 = myY;
         BigInteger x2 = otherPoint.getX();
@@ -71,17 +73,19 @@ public class EllipticCurvePoint {
     }
 
     // Scalar multiplication formula from the pseudocode in the project specification sheet.
-    public static EllipticCurvePoint scalarMultiplcation(EllipticCurvePoint P, BigInteger s) {
-        EllipticCurvePoint V = P;
-        String temp = s.toString();
+    public static EllipticCurvePoint scalarMultiplication(EllipticCurvePoint P, BigInteger s) {
+        String temp = s.toString(2);
         int k = temp.length();
+        EllipticCurvePoint result = new EllipticCurvePoint();
+        EllipticCurvePoint V = P;
         for (int i = k - 1; i >= 0; i--) {
-            V.addPoints(V);
-            if (temp.charAt(i) == '1') {
-                V = V.addPoints(P);
+            V = EllipticCurvePoint.addPoints(V);
+            char s_i = temp.charAt(i);
+            if (s_i == '1') {
+                result = EllipticCurvePoint.addPoints(V);
             }
         }
-        return V;
+        return result;
     }
 
     public BigInteger getX() {
