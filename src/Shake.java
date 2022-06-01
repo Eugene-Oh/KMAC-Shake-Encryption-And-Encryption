@@ -2,15 +2,24 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-// TCSS 487 Project - Alex Trinh, Eugene Oh.
-// All functions were based off of mjorsaarinen's tiny_sha3 implementation on GitHub
-// and the SHA-3 NIST documentation.
+/**
+ * TCSS 487 - Final Cryptography Project - Alex Trinh, Eugene Oh
+ *
+ * The class representing SHAKE and KMAC. All functions were based off of
+ * mjorsaarinen's tiny_sha3 implementation on GitHub and the SHA-3 NIST documentation.
+ */
 public class Shake {
 
+    private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+
     private static final int KECCAKF_ROUNDS = 24;
+
     private static int mdlen, rsiz, pt;
+
     private static boolean KMACMode = false;
+
     private static boolean XOFCheck = false;
+
     private static byte[] state = new byte[200];
 
     private static final long[] keccakf_rndc = {
@@ -34,12 +43,22 @@ public class Shake {
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1
     };
 
-    // Simulates bit rotation.
+    /**
+     * Simulates bit rotation.
+     *
+     * @param x Used for calculation.
+     * @param y Used for calculation.
+     * @return A long representing bits rotated to the left.
+     */
     private static long RotateLeft(long x, int y) {
         return (x << y) | (x >>> (64 - y));
     }
 
-    // The very easy to understand keccak algorithm.
+    /**
+     * The very to easy understand core keccak algorithm.
+     *
+     * @param stateArg Current byte state of the shake class.
+     */
     static void sha3_keccakf(byte[] stateArg) {
         long[] q = new long[25];
         long[] bc = new long[5];
@@ -108,7 +127,9 @@ public class Shake {
         state = stateArg;
     }
 
-    // Initialization for SHA3.
+    /**
+     * Initialization for SHA3.
+     */
     public static void sha3_init() {
         Arrays.fill(state, (byte) 0);
         mdlen = 32;
@@ -116,7 +137,9 @@ public class Shake {
         pt = 0;
     }
 
-    // Initialization for KMAC.
+    /**
+     * Initialization for KMAC.
+     */
     public static void KMAC_init(byte[] K, byte[] S, byte[] KMAC) {
         byte[] encK = bytepad(encode_string(K), BigInteger.valueOf(136));
         sha3_init();
@@ -128,7 +151,9 @@ public class Shake {
         sha3_update(encK, encK.length);
     }
 
-    // Updating the state with more data.
+    /**
+     * Updating the state with more data.
+     */
     public static void sha3_update(byte[] data, int len) {
         int j = pt;
         for (int i = 0; i < len; i++) {
@@ -141,26 +166,9 @@ public class Shake {
         pt = j;
     }
 
-    // Finalize and output a hash.
-    public static byte[] sha3_final() {
-        state[pt] ^= 0x06;
-        state[rsiz - 1] ^= 0x80;
-        sha3_keccakf(state);
-        byte[] md = new byte[mdlen];
-        for (int i = 0; i < mdlen; i++) {
-            md[i] = state[i];
-        }
-        return md;
-    }
-
-    // The SHA-3 Hash which returns a hash from a given byte array.
-    public static byte[] sha3(byte[] in, int inlen, int mdlen) {
-        sha3_init();
-        sha3_update(in, inlen);
-        return sha3_final();
-    }
-
-    // SHAKE128 and SHAKE256 extensible-output functionality.
+    /**
+     * The extensibility function for SHAKE and KMAC.
+     */
     public static void shake_xof() {
         if (KMACMode) {
             byte[] right_encode = right_encode(0);
@@ -172,12 +180,13 @@ public class Shake {
             state[pt] ^= (byte)0x1F;
         }
         state[rsiz - 1] ^= (byte)0x80;
-
         sha3_keccakf(state);
         pt = 0;
     }
 
-    // SHAKE128 and SHAKE256 extensible-output functionality.
+    /**
+     * Updates the current state of SHAKE.
+     */
     public static void shake_out(byte[] out, int len) {
         int j = pt;
         for (int i = 0; i < len; i++) {
@@ -192,6 +201,7 @@ public class Shake {
 
     /**
      * Computes a byte array from a given integer.
+     *
      * @param x The integer to be used to to encode the byte array.
      * @return The computed byte array.
      */
@@ -217,6 +227,7 @@ public class Shake {
 
     /**
      * Computes a byte array from a given integer.
+     *
      * @param x The integer to be used to to encode the byte array.
      * @return The computed byte array.
      */
@@ -236,6 +247,7 @@ public class Shake {
     /**
      * This code is from Professor Barreto's Week 2 Slides.
      * Apply the NIST bytepad primitive to a byte array X with encoding factor w.
+     *
      * @param X the byte array to bytepad
      * @param w the encoding factor (the output length must be a multiple of w)
      * @return the byte-padded byte array X with encoding factor w.
@@ -260,11 +272,11 @@ public class Shake {
 
     /**
      * Computes two byte arrays from the given bit strings.
+     *
      * @param bitString The given bit string.
      * @return A byte array combined from the two computed byte arrays.
      */
     static byte[] encode_string(byte[] bitString) {
-        BigInteger bitStringLength = BigInteger.valueOf(bitString.length);
         byte[] leftEncodeResult = left_encode(bitString.length << 3);
 
         // An empty bit string is passed.
@@ -283,8 +295,9 @@ public class Shake {
     }
 
     /**
-     * Concatenates a and b to a new byte array
-     * @param a the first array
+     * Concatenates a and b to a new byte array.
+     *
+     * @param a The first array
      * @param b the second array
      * @return A byte array combined from two given a and b array
      */
@@ -298,6 +311,7 @@ public class Shake {
     }
 
     /**
+     * Represents CSHAKE256. Based of the pseudocode from the NIST document.
      *
      * @param X The main input bit string. May be of any length, including 0.
      * @param L Integer representing the requested output length in bits.
@@ -323,6 +337,7 @@ public class Shake {
     }
 
     /**
+     * Represents KMACXOF256. Based of the pseudocode from the NIST document.
      *
      * @param K Key bit string of any length.
      * @param X Main input bit string on any length.
@@ -337,21 +352,15 @@ public class Shake {
         shake.KMAC_init(K, S, "KMAC".getBytes());
         shake.sha3_update(X, X.length);
         shake.shake_xof();
-        // HERE IS THE CAUSE OF THE ENCRYPTION/DECRYPTION ERROR ([result.length >>> 3] vs [result.length]) ---------------------
-        // Having it here causes enc/dec to stop functioning, but it passes all of the tests.
-        // Not having it allows enc/dec to work, but it does not pass all of the tests because
-        // the outputted byte array is too long. It is the correct input, but not trimmed.
-        // May be something wrong inside of enc/dec functions.
-        byte[] result_cut = new byte[result.length >>> 3]; // vs. [result.length];
-        shake.shake_out(result_cut, result.length >>> 3); // vs. result.length);
-        // HERE IS THE CAUSE OF THE ENCRYPTION/DECRYPTION ERROR ([result.length >>> 3] vs [result.length]) ---------------------
+        byte[] result_cut = new byte[result.length >>> 3];
+        shake.shake_out(result_cut, result.length >>> 3);
         return result_cut;
     }
 
-    private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
-
     /**
-     * @param bytes To be converted.
+     * Converts a byte array to hex format, mostly used for testing and outputting to console.
+     *
+     * @param bytes Byte array to be converted.
      * @return Hex representation of byte array.
      */
     static String bytesToHex(byte[] bytes) {

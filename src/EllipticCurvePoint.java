@@ -1,32 +1,49 @@
 import java.io.Serializable;
 import java.math.BigInteger;
 
-// This class represents a single point on Edward's Curve.
+/**
+ * TCSS 487 - Final Cryptography Project - Alex Trinh, Eugene Oh
+ *
+ * This class represents a single point on Edward's Curve.
+ */
 public class EllipticCurvePoint implements Serializable {
-    private static BigInteger myX;
-    private static BigInteger myY;
+    private BigInteger myX;
+    private BigInteger myY;
 
-    private static BigInteger MersennePrime = new BigInteger("2").pow(521).subtract(new BigInteger("-1"));
+    // Various constants used in arithmetic regarding computing points.
+    private static BigInteger MersennePrime = new BigInteger("2").pow(521).subtract(new BigInteger("1"));
+
     public static BigInteger r = new BigInteger("2").pow(519).subtract(new BigInteger(
             "337554763258501705789107630418782636071" +
             "904961214051226618635150085779108655765"));
+
     private static BigInteger d = new BigInteger("-376014");
 
     public static EllipticCurvePoint G = new EllipticCurvePoint(BigInteger.valueOf(4), false);
 
-    // Constructor for given elements.
+    /**
+     * Constructor for a single point.
+     * @param x Sets x-coordinate of point.
+     * @param y Sets y-coordinate of point.
+     */
     public EllipticCurvePoint(BigInteger x, BigInteger y) {
         myX = x;
         myY = y;
     }
 
-    // Constructor for neutral element.
+    /**
+     * Constructor for a neutral point.
+     */
     public EllipticCurvePoint() {
         myX = new BigInteger("0");
         myY = new BigInteger("1");
     }
 
-    // Getting (x, y) from x and least significant bit of y. Equation is given in the project specification sheet.
+    /**
+     * Constructor for a single point using least significant bit.
+     * @param x Sets x-coordinate of point.
+     * @param y The desired least significant bit.
+     */
     public EllipticCurvePoint(BigInteger x, boolean y) {
         myX = x;
         BigInteger numerator = BigInteger.valueOf(1).subtract(x.modPow(BigInteger.valueOf(2), MersennePrime));
@@ -41,7 +58,12 @@ public class EllipticCurvePoint implements Serializable {
         }
     }
 
-    public static boolean compare(EllipticCurvePoint point) {
+    /**
+     * Compares two points for equality.
+     * @param point The other point used for comparison.
+     * @return Boolean based on equality.
+     */
+    public boolean compare(EllipticCurvePoint point) {
         if (point.getX().equals(myX) && point.getY().equals(myY)) {
             return true;
         } else {
@@ -49,55 +71,78 @@ public class EllipticCurvePoint implements Serializable {
         }
     }
 
+    /**
+     * Calculates the opposite of a given point.
+     * @param point The other point used for computation.
+     * @return The opposite point.
+     */
     public static EllipticCurvePoint opposite(EllipticCurvePoint point) {
         BigInteger resultX = point.getX().modInverse(MersennePrime);
         BigInteger resultY = point.getY().modInverse(MersennePrime);
         return new EllipticCurvePoint(resultX, resultY);
     }
 
-    // Addition of current and other point based on the equation from the project specification sheet.
-    public static EllipticCurvePoint addPoints(EllipticCurvePoint otherPoint) {
+    /**
+     * Addition of current and other point based on the equation from the project specification sheet.
+     * @param otherPoint The point that is used in addition to the current point.
+     * @return The resulting point from calculation.
+     */
+    public EllipticCurvePoint addPoints(EllipticCurvePoint otherPoint) {
         BigInteger x1 = myX;
         BigInteger y1 = myY;
         BigInteger x2 = otherPoint.getX();
         BigInteger y2 = otherPoint.getY();
 
         BigInteger numeratorX = (x1.multiply(y2)).add(y1.multiply(x2));
-        BigInteger denominator = (d.multiply(x1).multiply(x2).multiply(y1).multiply(y2)).add(BigInteger.valueOf(1));
-        BigInteger resultX = (numeratorX.multiply(denominator.modInverse(MersennePrime)));
-
+        BigInteger temp = (d.multiply(x1).multiply(x2).multiply(y1).multiply(y2));
+        BigInteger denominatorX = BigInteger.ONE.add(temp);
+        BigInteger denominatorY = BigInteger.ONE.subtract(temp);
+        BigInteger resultX = (numeratorX.multiply(denominatorX.modInverse(MersennePrime)).mod(MersennePrime));
         BigInteger numeratorY = (y1.multiply(y2)).subtract(x1.multiply(x2));
-        BigInteger resultY = (numeratorY.multiply(denominator.modInverse(MersennePrime)));
-
+        BigInteger resultY = (numeratorY.multiply(denominatorY.modInverse(MersennePrime)).mod(MersennePrime));
         return new EllipticCurvePoint(resultX, resultY);
     }
 
-    // Scalar multiplication formula from the pseudocode in the project specification sheet.
+    /**
+     * Scalar multiplication formula from the pseudocode in the project specification sheet.
+     * @param P The point to do the multiplication to.
+     * @param s The scalar used to apply to the given point.
+     * @return The calculated result from multiplcation.
+     */
     public static EllipticCurvePoint scalarMultiplication(EllipticCurvePoint P, BigInteger s) {
         String temp = s.toString(2);
         int k = temp.length();
-        EllipticCurvePoint result = new EllipticCurvePoint();
-        EllipticCurvePoint V = P;
+        EllipticCurvePoint V = new EllipticCurvePoint(P.getX(),P.getY());
         for (int i = k - 1; i >= 0; i--) {
-            V = EllipticCurvePoint.addPoints(V);
+            V = V.addPoints(V);
             char s_i = temp.charAt(i);
             if (s_i == '1') {
-                result = EllipticCurvePoint.addPoints(V);
+                V = V.addPoints(P);
             }
         }
-        return result;
+        return V;
     }
 
+    /**
+     * Getter for X.
+     * @return X.
+     */
     public BigInteger getX() {
         return myX;
     }
 
+    /**
+     * Getter for Y.
+     * @return Y.
+     */
     public BigInteger getY() {
         return myY;
     }
 
     /**
-     * Compute a square root of v mod p with a specified
+     *
+     * This is taken from the project specification sheet.
+     * Compute a square root of v mod p with a specified.
      * least significant bit, if such a root exists.
      *
      * @param v the radicand.
